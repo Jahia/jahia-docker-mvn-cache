@@ -1,6 +1,7 @@
 ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-base
 
 FROM $SRC_IMAGE
+LABEL maintainer="Jahia"
 
 # Create a non-root user (uid/gid 1000) with a home directory
 RUN addgroup -g 1000 jahia-ci \
