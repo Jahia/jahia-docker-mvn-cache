@@ -3,6 +3,8 @@ ARG BASE_TAG=17-jdk-alpine
 FROM eclipse-temurin:$BASE_TAG
 LABEL maintainer="Jahia"
 
+USER root
+
 ARG REFRESHED_AT
 ENV REFRESHED_AT=$REFRESHED_AT
 
