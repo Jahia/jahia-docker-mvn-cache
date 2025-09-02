@@ -18,6 +18,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: |
