@@ -1,55 +1,55 @@
 # jahia-docker-mvn-cache
 
-Docker images containing a warmed up maven cache. Aimed at reducing the time it takes to fetch individual maven artifacts
+Docker images containing a warmed up maven cache. Aimed at reducing the time it takes to fetch individual maven artifacts during CI build steps.
+
+This repository serves as a replacement for https://github.com/Jahia/cimg-mvn-cache.
+It is heavily inspired by work done in https://github.com/timbru31/docker-java-node
+
+Images are pushed to this GitHub Packages repository: https://github.com/Jahia/jahia-docker-mvn-cache/pkgs/container/jahia-docker-mvn-cache
 
 ## Repository organization and build flow
 
-We build multiple independent images while sharing heavy build work (warming the Maven cache) across them.
+Multiple images are built, with different JDK versions. To avoid having to run the "slow" `mvn dependency:resolve` multiple time, a first "default" image is built entirely.
 
-- Base Dockerfiles per JDK: `Dockerfile-8-jdk-alpine-node`, `Dockerfile-11-jdk-alpine-node`, `Dockerfile-17-jdk-alpine-node`
-- A generic base with common tooling: `Dockerfile-base`
-- Cache-loader Dockerfile: `Dockerfile` (clones private sources and runs Maven to warm the cache)
-- GitHub Actions workflow: `.github/workflows/build-and-push.yml`
+Then when building subsequent images, the .m2 folder is fetched directly from a fully built default image using a multi-stage Dockerfile.
 
-High-level flow (example using JDK 17 as the “producer”):
+Default versions and additional images are defined in the `build-and-push.yml` GitHub Action worklow.
+
+High-level flow (example using JDK 17 as the default):
 
 ```
-                 ┌──────────────────────────────────────┐
-                 │  Dockerfile-17-jdk-alpine-node       │  (fast)
-                 │  - JDK + Node + Maven (no cache)     │
-                 └───────────────┬──────────────────────┘
-                                 │ build & push base image
-                                 ▼
-                 ┌──────────────────────────────────────┐
-                 │  Dockerfile (cache loader)           │  (slow once)
-                 │  - git clone + mvn dependency:resolve│
-                 │  - produces warmed /home/jahia-ci/.m2│
-                 └───────────────┬──────────────────────┘
-                                 │ push cache-loaded image (producer)
-                                 ▼
-      ┌───────────────────────────┴───────────────────────────┐
-      │                                                       │
-┌──────────────┐                                       ┌──────────────┐
-│ JDK 8 base   │                                       │ JDK 11 base  │
-│ Dockerfile-8 │                                       │ Dockerfile-11│
-└──────┬───────┘                                       └──────┬───────┘
-       │ COPY --from=producer .m2                                │ COPY --from=producer .m2
-       ▼                                                          ▼
-  build/push JDK 8 image with cache                        build/push JDK 11 image with cache
+                         ┌──────────────────────────────────────┐
+                         │  Dockerfile (17-jdk-alpine)          │  (fast)
+                         │  - JDK + Node + Maven (no cache)     │
+                         └───────────────┬──────────────────────┘
+                                         │ build & push base image
+                                         ▼
+                         ┌──────────────────────────────────────────┐
+                         │  Dockerfile-mvn (cache loader)           │  (slow once)
+                         │  - git clone + mvn dependency:resolve.   │
+                         │  - produces warmed /home/jahia-ci/.m2.   │
+                         └───────────────┬──────────────────────────┘
+                                         │ push cache-loaded image (producer)
+                                         ▼
+                  ┌──────────────────────┴────────────────────────────────┐
+                  │                                                       │
+  ┌──────────────────────────────────────┐              ┌──────────────────────────────────────┐
+  │  Dockerfile-base (8-jdk-alpine)      │  (fast)      │  Dockerfile-base (11-jdk-alpine)     │  (fast)
+  │  - JDK + Node + Maven (no cache)     │              │  - JDK + Node + Maven (no cache)     │
+  └───────────────┬──────────────────────┘              └───────────────┬──────────────────────┘
+                  │                                                     │
+                  ▼                                                     ▼
+  ┌────────────────────────────────────────┐              ┌────────────────────────────────────────┐
+  │  Dockerfile-fromcache                  │  (fast)      │  Dockerfile-fromcache                  │  (fast)
+  │  - copy .m2 folder from default image  │              │  - copy .m2 folder from default image  │
+  └───────────────┬──────────────────────--┘              └────--───────────┬──────────────────────┘
+                  │                                                         │
+                  ▼                                                         ▼
+      build/push JDK 8 image with cache                     build/push JDK 11 image with cache
+
 ```
 
-Key idea: warm the Maven cache once in a “producer” image, then other images copy the `.m2` directory from that image instead of running Maven again.
-
-In Dockerfiles for consumer images, use external multi-stage COPY:
-
-```dockerfile
-# syntax=docker/dockerfile:1.7
-FROM ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-mvn AS producer
-
-FROM eclipse-temurin:11-jdk-alpine
-# ... create non-root user 1000:1000 (e.g., jahia-ci) ...
-COPY --from=producer --chown=1000:1000 /home/jahia-ci/.m2 /home/jahia-ci/.m2
-```
+Key idea: warm the Maven cache once in a default image, then other images copy the `.m2` directory from that image instead of running Maven again.
 
 ## Build image locally
 
@@ -86,13 +86,3 @@ docker run --rm -it \
   --entrypoint /bin/sh \
   ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-alpine-node-mvn
 ```
-
-## CI workflow (matrix)
-
-The GitHub Actions workflow builds the “producer” (e.g., JDK 17) first to warm the cache. Subsequent matrix builds (e.g., JDK 8, 11) create their base images and COPY the `.m2` directory from the producer image instead of re-fetching dependencies.
-
-Benefits:
-
-- Warm Maven cache once per run → big time savings
-- Repeatable: consumers pin the producer tag (or digest)
-- Lean: images remain minimal; no duplicate network traffic
