@@ -10,5 +10,15 @@ RUN --mount=type=ssh,uid=1000,gid=1000 sh -lc '\
     git clone git@github.com:Jahia/jahia-private.git && \
     cd jahia-private && \
     mvn -B -s ../maven.settings.xml dependency:resolve && \
+    git checkout -b JAHIA_8_2_2_0 JAHIA_8_2_1_0 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \    
+    git checkout -b JAHIA_8_2_1_0 JAHIA_8_2_1_0 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \
+    git checkout -b JAHIA_8_2_0_7 JAHIA_8_2_0_7 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve &&\
+    git checkout -b JAHIA_8_1_9_0 JAHIA_8_1_9_0 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \    
+    git checkout -b JAHIA_8_1_8_2 JAHIA_8_1_8_2 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \
     cd .. && \
     rm -rf jahia-private'
