@@ -10,8 +10,8 @@ ARG MAVEN_VERSION=3.9.11
 ENV MAVEN_HOME=/opt/maven \
   MAVEN_CONFIG=/root/.m2
 
-RUN echo @new-stable https://dl-cdn.alpinelinux.org/alpine/v3.21/community >> /etc/apk/repositories \
-  && echo @new-stable https://dl-cdn.alpinelinux.org/alpine/v3.21/main >> /etc/apk/repositories \
+RUN echo @new-stable https://dl-cdn.alpinelinux.org/alpine/latest-stable/community >> /etc/apk/repositories \
+  && echo @new-stable https://dl-cdn.alpinelinux.org/alpine/latest-stable/main >> /etc/apk/repositories \
   && apk -U upgrade \
   && apk add --no-cache \
     nodejs@new-stable \
