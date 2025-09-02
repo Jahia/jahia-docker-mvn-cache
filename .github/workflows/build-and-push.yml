@@ -1,0 +1,89 @@
+name: On Code Change
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+
+jobs:
+  # Builds a base image containing the maven cache
+  build-base:
+    name: Buid and push Base docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Login to GitHub registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: |
+            ${{ secrets.BASTION_SSH_PRIVATE_KEY_JAHIACI }}
+            ${{ secrets.GH_SSH_PRIVATE_KEY_JAHIACI }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push CircleCI Docker image
+        uses: docker/build-push-action@v6
+        with:
+          ssh: default
+          push: true
+          file: ./Dockerfile-17-jdk-alpine-node
+          tags: ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-base
+
+  # build:
+  #   strategy:
+  #     matrix:
+  #       jdk_version:
+  #         - "8-jdk-alpine-node"
+  #         - "11-jdk-alpine-node"
+  #         - "17-jdk-alpine-node"
+  #   name: Buid and push Docker Images
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@main
+  #     - name: Login to GitHub registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Creating tag from CircleCI image
+  #       shell: bash
+  #       run: |
+  #         echo "SRC_IMAGE=${{ matrix.jdk_version }}" >> $GITHUB_ENV
+  #         echo "JAHIA_TAG=$(echo ${{ matrix.jdk_version }} | sed -r 's/[:\/]+/_/g')" >> $GITHUB_ENV
+  #         echo "FROM_IMAGE=jahia/cimg-mvn-cache:$(echo ${{ matrix.jdk_version }} | sed -r 's/[:\/]+/_/g')" >> $GITHUB_ENV
+  #     - name: Printing CircleCI image tags
+  #       shell: bash
+  #       run: |
+  #         echo "CCI_SRC_IMAGE=${CCI_SRC_IMAGE}"
+  #         echo "JAHIA_TAG=${JAHIA_TAG}"
+  #         echo "FROM_IMAGE=${FROM_IMAGE}"
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
+  #     - uses: webfactory/ssh-agent@v0.7.0
+  #       with:
+  #         ssh-private-key: |
+  #           ${{ secrets.BASTION_SSH_PRIVATE_KEY_JAHIACI }}
+  #           ${{ secrets.GH_SSH_PRIVATE_KEY_JAHIACI }}
+  #     - name: Build and push CircleCI Docker image
+  #       uses: docker/build-push-action@v3
+  #       with:
+  #         ssh: default
+  #         push: true
+  #         tags: jahia/cimg-mvn-cache:${{ env.JAHIA_TAG }}
+  #         build-args: |
+  #           CCI_SRC_IMAGE=${{ env.CCI_SRC_IMAGE }}
+  #     - name: Build and push Github Actions Docker image
+  #       uses: docker/build-push-action@v3
+  #       with:
+  #         ssh: default
+  #         push: true
+  #         tags: jahia/cimg-mvn-cache:ga_${{ env.JAHIA_TAG }}
+  #         file: Dockerfile-github
+  #         build-args: |
+  #           FROM_IMAGE=${{ env.FROM_IMAGE }}
+  #           CCI_SRC_IMAGE=${{ env.CCI_SRC_IMAGE }}
