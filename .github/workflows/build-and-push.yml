@@ -6,11 +6,60 @@ on:
     - cron: "0 0 * * *"
   push:
 
+env:
+  DEFAULT_VERSION: 17-jdk-alpine-node
+
 jobs:
   # Builds a base image containing the maven cache
   build-base:
     name: Buid and push Base docker image
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Login to GitHub registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: |
+            ${{ secrets.BASTION_SSH_PRIVATE_KEY_JAHIACI }}
+            ${{ secrets.GH_SSH_PRIVATE_KEY_JAHIACI }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Base image
+        uses: docker/build-push-action@v6
+        with:
+          ssh: default
+          push: true
+          file: ./Dockerfile-${IMAGE}
+          tags: ghcr.io/jahia/jahia-docker-mvn-cache:${IMAGE}-base
+
+      - name: Build and push Loaded image
+        uses: docker/build-push-action@v6
+        with:
+          ssh: default
+          push: true
+          file: ./Dockerfile
+          tags: ghcr.io/jahia/jahia-docker-mvn-cache:${IMAGE}-mvn-loaded
+          build-args: |
+            SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${IMAGE}-base
+
+  build-additional:
+    needs: build-base
+    name: Build and push Additional docker images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk_version:
+          - "8-jdk-alpine-node"
+          - "11-jdk-alpine-node"
     steps:
       - uses: actions/checkout@v5
       - name: Login to GitHub registry
@@ -19,20 +68,23 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: |
             ${{ secrets.BASTION_SSH_PRIVATE_KEY_JAHIACI }}
             ${{ secrets.GH_SSH_PRIVATE_KEY_JAHIACI }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Build and push Base image
         uses: docker/build-push-action@v6
         with:
           ssh: default
           push: true
-          file: ./Dockerfile-17-jdk-alpine-node
-          tags: ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-base
+          file: ./Dockerfile-${{ matrix.jdk_version }}
+          tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-base
 
   # build:
   #   strategy:
