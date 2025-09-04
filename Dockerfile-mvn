@@ -1,4 +1,4 @@
-ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-base
+ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-noble-node-base
 
 FROM $SRC_IMAGE
 LABEL maintainer="Jahia"

@@ -7,7 +7,7 @@ on:
   push:
 
 env:
-  DEFAULT_VERSION: 17-jdk-alpine
+  DEFAULT_VERSION: 17-jdk-noble
 
 jobs:
   # Builds a base image containing the maven cache
@@ -60,8 +60,8 @@ jobs:
     strategy:
       matrix:
         jdk_version:
-          - "8-jdk-alpine"
-          - "11-jdk-alpine"
+          - "8-jdk-noble"
+          - "11-jdk-noble"
     steps:
       - uses: actions/checkout@v5
       - name: Login to GitHub registry

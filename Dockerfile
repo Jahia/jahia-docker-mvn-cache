@@ -1,4 +1,4 @@
-ARG BASE_TAG=17-jdk-alpine
+ARG BASE_TAG=17-jdk-noble
 
 FROM eclipse-temurin:$BASE_TAG
 LABEL maintainer="Jahia"
@@ -10,20 +10,19 @@ ARG MAVEN_VERSION=3.9.11
 ENV MAVEN_HOME=/opt/maven \
   MAVEN_CONFIG=/root/.m2
 
-RUN echo @new-stable https://dl-cdn.alpinelinux.org/alpine/latest-stable/community >> /etc/apk/repositories \
-  && echo @new-stable https://dl-cdn.alpinelinux.org/alpine/latest-stable/main >> /etc/apk/repositories \
-  && apk -U upgrade \
-  && apk add --no-cache \
-    nodejs@new-stable \
-    npm@new-stable \
+RUN apt-get update \
+  && apt-get install -y \
+    nodejs \
+    npm \
     yarn \
     curl \
     ca-certificates \
     git \
     openssh-client \
     bash \
-    tar
-
+    tar \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install Maven (download official binary to avoid pulling another JRE)
 RUN set -eux; \
