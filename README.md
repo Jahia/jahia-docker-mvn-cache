@@ -27,9 +27,9 @@ High-level flow (example using JDK 17 as the default):
                          ┌──────────────────────────────────────────┐
                          │  Dockerfile-mvn (cache loader)           │  (slow once)
                          │  - git clone + mvn dependency:resolve.   │
-                         │  - produces warmed /home/jahia-ci/.m2.   │
+                         │  - produces warmed /root/.m2.            │
                          └───────────────┬──────────────────────────┘
-                                         │ push cache-loaded image (producer)
+                                         │ push cache-loaded image (default)
                                          ▼
                   ┌──────────────────────┴────────────────────────────────┐
                   │                                                       │
