@@ -45,14 +45,12 @@ RUN addgroup -g 1000 jahia-ci \
  && chown -R jahia-ci:jahia-ci /home/jahia-ci
 
 # Maven settings used to warm the cache
-COPY --chown=jahia-ci:jahia-ci maven.settings.xml .
+COPY --chown=jahia-ci:jahia-ci maven.settings.xml /home/jahia-ci/
 
 # Switch to non-root by default
 ENV HOME=/home/jahia-ci
 WORKDIR /home/jahia-ci
 USER jahia-ci
-
-
 
 # Ensure ssh utilities are available and record github.com host key
 RUN mkdir -p -m 0700 /home/jahia-ci/.ssh \
