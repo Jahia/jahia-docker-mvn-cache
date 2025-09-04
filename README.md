@@ -19,7 +19,7 @@ High-level flow (example using JDK 17 as the default):
 
 ```
                          ┌──────────────────────────────────────┐
-                         │  Dockerfile (17-jdk-alpine)          │  (fast)
+                         │  Dockerfile (17-jdk-noble)           │  (fast)
                          │  - JDK + Node + Maven (no cache)     │
                          └───────────────┬──────────────────────┘
                                          │ build & push base image
@@ -27,14 +27,14 @@ High-level flow (example using JDK 17 as the default):
                          ┌──────────────────────────────────────────┐
                          │  Dockerfile-mvn (cache loader)           │  (slow once)
                          │  - git clone + mvn dependency:resolve.   │
-                         │  - produces warmed /home/jahia-ci/.m2.   │
+                         │  - produces warmed /root/.m2.            │
                          └───────────────┬──────────────────────────┘
-                                         │ push cache-loaded image (producer)
+                                         │ push cache-loaded image (default)
                                          ▼
                   ┌──────────────────────┴────────────────────────────────┐
                   │                                                       │
   ┌──────────────────────────────────────┐              ┌──────────────────────────────────────┐
-  │  Dockerfile-base (8-jdk-alpine)      │  (fast)      │  Dockerfile-base (11-jdk-alpine)     │  (fast)
+  │  Dockerfile-base (8-jdk-noble)       │  (fast)      │  Dockerfile-base (11-jdk-noble)      │  (fast)
   │  - JDK + Node + Maven (no cache)     │              │  - JDK + Node + Maven (no cache)     │
   └───────────────┬──────────────────────┘              └───────────────┬──────────────────────┘
                   │                                                     │
@@ -53,19 +53,19 @@ Key idea: warm the Maven cache once in a default image, then other images copy t
 
 ## Build image locally
 
-From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:eclipse-temurin-11-jdk-alpine-node`)
+From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:eclipse-temurin-11-jdk-noble-node`)
 
 ```bash
 docker buildx build \
   --platform linux/amd64 \
   --build-arg REFRESHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  -t ghcr.io/jahia/jahia-docker-mvn-cache:eclipse-temurin-11-jdk-alpine-node \
-  -f Dockerfile-11-jdk-alpine-node \
+  -t ghcr.io/jahia/jahia-docker-mvn-cache:eclipse-temurin-11-jdk-noble-node \
+  -f Dockerfile-11-jdk-noble-node \
   --push \
   .
 ```
 
-Once the base image is ready, build the maven cache image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-alpine-node-mvn`)
+Once the base image is ready, build the maven cache image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-mvn`)
 
 ```bash
 docker buildx build \
@@ -73,7 +73,7 @@ docker buildx build \
   --load \
   --ssh default \
   --pull \
-  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-alpine-node-mvn \
+  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-mvn \
   -f Dockerfile \
   .
 ```
@@ -84,5 +84,5 @@ Finally, open a bash session inside the container
 docker run --rm -it \
   --platform linux/amd64 \
   --entrypoint /bin/sh \
-  ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-alpine-node-mvn
+  ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-mvn
 ```
