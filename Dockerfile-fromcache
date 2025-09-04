@@ -1,0 +1,9 @@
+ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-alpine-node-base
+ARG CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-base-mvn-loaded
+
+FROM $CACHE_IMAGE AS cache
+
+FROM $SRC_IMAGE
+LABEL maintainer="Jahia"
+
+COPY --from=cache --chown=1000:1000 /home/jahia-ci/.m2 /home/jahia-ci/.m2

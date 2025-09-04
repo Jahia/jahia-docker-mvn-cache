@@ -1,0 +1,24 @@
+ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-alpine-node-base
+
+FROM $SRC_IMAGE
+LABEL maintainer="Jahia"
+
+# Warm up the Maven cache from the private repository (SSH key is provided at build time)
+# Fail-fast: any failing command will stop the build
+RUN --mount=type=ssh,uid=1000,gid=1000 sh -lc '\
+    set -euo pipefail; \
+    git clone git@github.com:Jahia/jahia-private.git && \
+    cd jahia-private && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \
+    git checkout -b JAHIA_8_2_2_0 JAHIA_8_2_2_0 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \    
+    git checkout -b JAHIA_8_2_1_0 JAHIA_8_2_1_0 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \
+    git checkout -b JAHIA_8_2_0_7 JAHIA_8_2_0_7 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve &&\
+    git checkout -b JAHIA_8_1_9_0 JAHIA_8_1_9_0 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \    
+    git checkout -b JAHIA_8_1_8_2 JAHIA_8_1_8_2 && \
+    mvn -B -s ../maven.settings.xml dependency:resolve && \
+    cd .. && \
+    rm -rf jahia-private'
