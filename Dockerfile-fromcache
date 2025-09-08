@@ -6,4 +6,4 @@ FROM $CACHE_IMAGE AS cache
 FROM $SRC_IMAGE
 LABEL maintainer="Jahia"
 
-COPY --from=cache --chown=1000:1000 /root/.m2 /root/.m2
+COPY --from=cache /root/.m2 /root/.m2

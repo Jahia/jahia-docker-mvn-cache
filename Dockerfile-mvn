@@ -6,6 +6,7 @@ LABEL maintainer="Jahia"
 # Warm up the Maven cache from the private repository (SSH key is provided at build time)
 # Fail-fast: any failing command will stop the build
 RUN --mount=type=ssh sh -lc '\
+    set -euo pipefail; \
     git clone git@github.com:Jahia/jahia-private.git && \
     cd jahia-private && \
     mvn -B -s ../maven.settings.xml dependency:resolve && \
