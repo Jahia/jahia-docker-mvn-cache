@@ -118,8 +118,10 @@ jobs:
       - name: Test Java version matches container_version
         shell: bash
         run: |
+          # Get container_version from matrix
+          CONTAINER_VERSION="${{ matrix.container_version }}"
           # Extract expected JDK major version from matrix string (e.g. 11 from 11-jdk-noble-node-base)
-          EXPECTED_VERSION="${{ matrix.container_version%%-* }}"
+          EXPECTED_VERSION="${CONTAINER_VERSION%%-*}"
           echo "Expected JDK major version: $EXPECTED_VERSION"
 
           # Get Java version output
@@ -133,10 +135,10 @@ jobs:
 
           # Test and fail if not matching
           if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
-            echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container ${{ matrix.container_version }}."
+            echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
             exit 1
           else
-            echo "✅ Java major version ($JAVA_MAJOR_VERSION) matches expected version ($EXPECTED_VERSION) for container ${{ matrix.container_version }}."
+            echo "✅ Java major version ($JAVA_MAJOR_VERSION) matches expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
           fi
 
       - name: Show disk usage in container
@@ -164,8 +166,10 @@ jobs:
       - name: Test Java version matches container_version
         shell: bash
         run: |
-          # Extract expected JDK major version from matrix string (e.g. 11 from 11-jdk-noble-mvn-loaded)
-          EXPECTED_VERSION="${{ matrix.container_version%%-* }}"
+          # Get container_version from matrix
+          CONTAINER_VERSION="${{ matrix.container_version }}"
+          # Extract expected JDK major version from matrix string (e.g. 11 from 11-jdk-noble-node-base)
+          EXPECTED_VERSION="${CONTAINER_VERSION%%-*}"
           echo "Expected JDK major version: $EXPECTED_VERSION"
 
           # Get Java version output
@@ -179,10 +183,10 @@ jobs:
 
           # Test and fail if not matching
           if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
-            echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container ${{ matrix.container_version }}."
+            echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
             exit 1
           else
-            echo "✅ Java major version ($JAVA_MAJOR_VERSION) matches expected version ($EXPECTED_VERSION) for container ${{ matrix.container_version }}."
+            echo "✅ Java major version ($JAVA_MAJOR_VERSION) matches expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
           fi
 
       - name: Show disk usage in container
