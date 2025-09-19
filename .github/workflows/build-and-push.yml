@@ -120,22 +120,24 @@ jobs:
       - name: Test Java version matches container_version
         shell: bash
         run: |
-          # Get container_version from matrix
           CONTAINER_VERSION="${{ matrix.container_version }}"
-          # Extract expected JDK major version from matrix string (e.g. 11 from 11-jdk-noble-node-base)
           EXPECTED_VERSION="${CONTAINER_VERSION%%-*}"
           echo "Expected JDK major version: $EXPECTED_VERSION"
 
-          # Get Java version output
-          JAVA_VERSION_OUTPUT="$(java --version 2>&1 || true)"
+          # Use java -version for widest compatibility (Java 8+)
+          JAVA_VERSION_OUTPUT="$(java -version 2>&1 || true)"
           echo "Java version output:"
           echo "$JAVA_VERSION_OUTPUT"
 
-          # Extract the first number from the first line (e.g. 17 from 'openjdk 17.0.16 ...')
-          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | head -n 1 | grep -o -E '[0-9]+' | head -n 1)"
+          # For Java 8, version string is on the first line, like: 'java version "1.8.0_382"'
+          # For Java 9+, version string is on the first line, like: 'openjdk version "11.0.19" 2023-04-18'
+          # Extract the major version:
+          # - For Java 8: parse 1.8 as 8
+          # - For Java 9+: parse 9, 11, 17, etc.
+          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"([0-9]+\.[0-9]+|[0-9]+)' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done)"
+
           echo "Detected JDK major version: $JAVA_MAJOR_VERSION"
 
-          # Test and fail if not matching
           if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
             echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
             exit 1
@@ -168,22 +170,27 @@ jobs:
       - name: Test Java version matches container_version
         shell: bash
         run: |
-          # Get container_version from matrix
+      - name: Test Java version matches container_version
+        shell: bash
+        run: |
           CONTAINER_VERSION="${{ matrix.container_version }}"
-          # Extract expected JDK major version from matrix string (e.g. 11 from 11-jdk-noble-node-base)
           EXPECTED_VERSION="${CONTAINER_VERSION%%-*}"
           echo "Expected JDK major version: $EXPECTED_VERSION"
 
-          # Get Java version output
-          JAVA_VERSION_OUTPUT="$(java --version 2>&1 || true)"
+          # Use java -version for widest compatibility (Java 8+)
+          JAVA_VERSION_OUTPUT="$(java -version 2>&1 || true)"
           echo "Java version output:"
           echo "$JAVA_VERSION_OUTPUT"
 
-          # Extract the first number from the first line (e.g. 17 from 'openjdk 17.0.16 ...')
-          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | head -n 1 | grep -o -E '[0-9]+' | head -n 1)"
+          # For Java 8, version string is on the first line, like: 'java version "1.8.0_382"'
+          # For Java 9+, version string is on the first line, like: 'openjdk version "11.0.19" 2023-04-18'
+          # Extract the major version:
+          # - For Java 8: parse 1.8 as 8
+          # - For Java 9+: parse 9, 11, 17, etc.
+          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"([0-9]+\.[0-9]+|[0-9]+)' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done)"
+
           echo "Detected JDK major version: $JAVA_MAJOR_VERSION"
 
-          # Test and fail if not matching
           if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
             echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
             exit 1
