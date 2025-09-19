@@ -101,7 +101,7 @@ jobs:
 
   test-base-containers:
     name: Test base containers
-    needs: build-base
+    needs: build-additional
     runs-on: ubuntu-latest
     strategy:
       matrix:
