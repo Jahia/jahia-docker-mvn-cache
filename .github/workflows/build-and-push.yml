@@ -115,5 +115,33 @@ jobs:
         username: ${{ secrets.GH_PACKAGES_USERNAME }}
         password: ${{ secrets.GH_PACKAGES_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Test Java version matches container_version
+        shell: bash
+        run: |
+          # Extract expected JDK major version from matrix string (e.g. 11 from 11-jdk-noble-node-base)
+          EXPECTED_VERSION="${{ matrix.container_version%%-* }}"
+          echo "Expected JDK major version: $EXPECTED_VERSION"
+
+          # Get Java version output
+          JAVA_VERSION_OUTPUT="$(java --version 2>&1 || true)"
+          echo "Java version output:"
+          echo "$JAVA_VERSION_OUTPUT"
+
+          # Extract the first number from the first line (e.g. 17 from 'openjdk 17.0.16 ...')
+          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | head -n 1 | grep -o -E '[0-9]+' | head -n 1)"
+          echo "Detected JDK major version: $JAVA_MAJOR_VERSION"
+
+          # Test and fail if not matching
+          if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container ${{ matrix.container_version }}."
+            exit 1
+          else
+            echo "✅ Java major version ($JAVA_MAJOR_VERSION) matches expected version ($EXPECTED_VERSION) for container ${{ matrix.container_version }}."
+          fi
+
+      - name: Show disk usage in container
+        shell: bash
+        run: |
+          echo "Disk usage in container:"
+          df -h /
      
