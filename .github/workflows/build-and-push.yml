@@ -87,6 +87,8 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base
+          build-args: |
+            BASE_TAG=${{ matrix.jdk_version }}
 
       - name: Build and push Loaded image USING CACHE
         uses: docker/build-push-action@v6
