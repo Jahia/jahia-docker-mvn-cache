@@ -134,8 +134,7 @@ jobs:
           # Extract the major version:
           # - For Java 8: parse 1.8 as 8
           # - For Java 9+: parse 9, 11, 17, etc.
-          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"([0-9]+\.[0-9]+|[0-9]+)' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done)"
-
+          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"[0-9]+\.[0-9]+|\"[0-9]+' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done | head -n1)"
           echo "Detected JDK major version: $JAVA_MAJOR_VERSION"
 
           if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
@@ -187,8 +186,7 @@ jobs:
           # Extract the major version:
           # - For Java 8: parse 1.8 as 8
           # - For Java 9+: parse 9, 11, 17, etc.
-          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"([0-9]+\.[0-9]+|[0-9]+)' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done)"
-
+          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"[0-9]+\.[0-9]+|\"[0-9]+' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done | head -n1)"
           echo "Detected JDK major version: $JAVA_MAJOR_VERSION"
 
           if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
