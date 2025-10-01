@@ -21,6 +21,7 @@ RUN apt-get update \
     openssh-client \
     bash \
     tar \
+  && npm i -g corepack \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
