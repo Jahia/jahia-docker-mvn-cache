@@ -122,7 +122,7 @@ jobs:
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}       
             CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-  
+
   # Note: It is currently not possible to pass an env variable to the container parameter
   # The tests are therefore disabled except if they are executed from main.
   test-loaded-containers:
@@ -174,4 +174,3 @@ jobs:
         run: |
           echo "Disk usage in container:"
           df -h /
-     
