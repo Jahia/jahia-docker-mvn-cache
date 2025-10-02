@@ -24,6 +24,7 @@ RUN apt-get update \
   && npm i -g corepack \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
+# Installed corepack separately because not installed when using apt or brew
 
 # Install Maven (download official binary to avoid pulling another JRE)
 RUN set -eux; \
