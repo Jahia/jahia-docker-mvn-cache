@@ -51,6 +51,8 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             BASE_TAG=${{ env.DEFAULT_VERSION }}
 
@@ -61,6 +63,8 @@ jobs:
           push: true
           file: ./Dockerfile-mvn
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
 
@@ -109,6 +113,8 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             BASE_TAG=${{ matrix.jdk_version }}
 
@@ -119,10 +125,12 @@ jobs:
           push: true
           file: ./Dockerfile-fromcache
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}       
             CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-  
+
   # Note: It is currently not possible to pass an env variable to the container parameter
   # The tests are therefore disabled except if they are executed from main.
   test-loaded-containers:
@@ -174,4 +182,3 @@ jobs:
         run: |
           echo "Disk usage in container:"
           df -h /
-     
