@@ -137,7 +137,7 @@ jobs:
           - "11-jdk-noble-mvn-loaded"
           - "17-jdk-noble-mvn-loaded"
     container:
-      image: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.container_version }}${{ env.IMAGE_SUFFIX }}
+      image: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.container_version }}
       credentials:
         username: ${{ secrets.GH_PACKAGES_USERNAME }}
         password: ${{ secrets.GH_PACKAGES_TOKEN }}
