@@ -9,11 +9,12 @@ Images are pushed to this GitHub Packages repository: https://github.com/Jahia/j
 
 ## Repository organization and build flow
 
-Multiple images are built, with different JDK versions. To avoid having to run the "slow" `mvn dependency:resolve` multiple time, a first "default" image is built entirely.
+Multiple images are built, with different JDK versions. To avoid having to run the "slow" `mvn dependency:resolve dependency:resolve-plugins` multiple time, a 
+first "default" image is built entirely.
 
 Then when building subsequent images, the .m2 folder is fetched directly from a fully built default image using a multi-stage Dockerfile.
 
-Default versions and additional images are defined in the `build-and-push.yml` GitHub Action worklow.
+Default versions and additional images are defined in the `build-and-push.yml` GitHub Action workflow.
 
 High-level flow (example using JDK 17 as the default):
 
