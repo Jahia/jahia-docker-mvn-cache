@@ -71,6 +71,13 @@ jobs:
           build-args: |
             BASE_TAG=${{ env.DEFAULT_VERSION }}
 
+      # Get the commit hash of the jahia-private repo, used in the cache key (to invalidate the cache when the repo changes)
+      - name: Get jahia-private repo commit hash
+        id: jahia-private-repo-hash
+        run: |
+          COMMIT_HASH=$(git ls-remote git@github.com:Jahia/jahia-private.git HEAD | cut -f1)
+          echo "hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+
       - name: Build and push Loaded image
         uses: docker/build-push-action@v6
         with:
@@ -78,8 +85,8 @@ jobs:
           push: true
           file: ./Dockerfile-mvn
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha,scope=mvn-${{ env.DEFAULT_VERSION }}{{ env.IMAGE_SUFFIX }}
-          cache-to: type=gha,mode=max,scope=mvn-${{ env.DEFAULT_VERSION }}{{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
+          cache-to: type=gha,mode=max,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
 
