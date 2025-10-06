@@ -170,10 +170,13 @@ jobs:
     if: github.ref_name == github.event.repository.default_branch
     strategy:
       matrix:
-        container_version:
-          - "8-jdk-noble-mvn-loaded"
-          - "11-jdk-noble-mvn-loaded"
-          - "17-jdk-noble-mvn-loaded"
+        include:
+          - container_version: "8-jdk-noble-mvn-loaded"
+            expected_java_version: "1.8"
+          - container_version: "11-jdk-noble-mvn-loaded"
+            expected_java_version: "11"
+          - container_version: "17-jdk-noble-mvn-loaded"
+            expected_java_version: "17"
     container:
       image: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.container_version }}
       credentials:
@@ -184,27 +187,17 @@ jobs:
         shell: bash
         run: |
           CONTAINER_VERSION="${{ matrix.container_version }}"
-          EXPECTED_VERSION="${CONTAINER_VERSION%%-*}"
-          echo "Expected JDK major version: $EXPECTED_VERSION"
-
-          # Use java -version for widest compatibility (Java 8+)
-          JAVA_VERSION_OUTPUT="$(java -version 2>&1 || true)"
-          echo "Java version output:"
-          echo "$JAVA_VERSION_OUTPUT"
-
-          # For Java 8, version string is on the first line, like: 'java version "1.8.0_382"'
-          # For Java 9+, version string is on the first line, like: 'openjdk version "11.0.19" 2023-04-18'
-          # Extract the major version:
-          # - For Java 8: parse 1.8 as 8
-          # - For Java 9+: parse 9, 11, 17, etc.
-          JAVA_MAJOR_VERSION="$(echo "$JAVA_VERSION_OUTPUT" | grep -oE '"[0-9]+\.[0-9]+|\"[0-9]+' | head -n1 | grep -oE '[0-9]+' | while read v; do [ "$v" -eq 1 ] && echo 8 || echo $v; done | head -n1)"
-          echo "Detected JDK major version: $JAVA_MAJOR_VERSION"
-
-          if [ "$JAVA_MAJOR_VERSION" != "$EXPECTED_VERSION" ]; then
-            echo "❌ Java major version ($JAVA_MAJOR_VERSION) does not match expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
-            exit 1
+          EXPECTED_VERSION="${{ matrix.expected_java_version }}"
+          echo "Expected Java specification version: $EXPECTED_VERSION"
+  
+          JAVA_VERSION="$(java -XshowSettings:properties -version 2>&1 | grep java.specification.version | awk -F' = ' '{print $2}')"
+          echo "Detected Java specification version: $JAVA_VERSION"
+  
+          if [ "$JAVA_VERSION" != "$EXPECTED_VERSION" ]; then
+          echo "❌ Java specification version ($JAVA_VERSION) does not match expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
+          exit 1
           else
-            echo "✅ Java major version ($JAVA_MAJOR_VERSION) matches expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
+          echo "✅ Java specification version ($JAVA_VERSION) matches expected version ($EXPECTED_VERSION) for container $CONTAINER_VERSION."
           fi
 
       - name: Show disk usage in container
