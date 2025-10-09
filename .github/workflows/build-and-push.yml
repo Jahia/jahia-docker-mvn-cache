@@ -12,7 +12,7 @@ env:
 jobs:
   # Builds a base image containing the maven cache
   build-base:
-    name: Buid and push Base docker image
+    name: Build and push Base docker image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -66,10 +66,17 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=base-${{ env.DEFAULT_VERSION }}{{ env.IMAGE_SUFFIX }}
+          cache-to: type=gha,mode=max,scope=base-${{ env.DEFAULT_VERSION }}{{ env.IMAGE_SUFFIX }}
           build-args: |
             BASE_TAG=${{ env.DEFAULT_VERSION }}
+
+      # Get the commit hash of the jahia-private repo, used in the cache key (to invalidate the cache when the repo changes)
+      - name: Get jahia-private repo commit hash
+        id: jahia-private-repo-hash
+        run: |
+          COMMIT_HASH=$(git ls-remote git@github.com:Jahia/jahia-private.git HEAD | cut -f1)
+          echo "hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
       - name: Build and push Loaded image
         uses: docker/build-push-action@v6
@@ -78,8 +85,8 @@ jobs:
           push: true
           file: ./Dockerfile-mvn
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
+          cache-to: type=gha,mode=max,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
 
@@ -143,8 +150,8 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=base-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
+          cache-to: type=gha,mode=max,scope=base-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
           build-args: |
             BASE_TAG=${{ matrix.jdk_version }}
 
@@ -155,8 +162,8 @@ jobs:
           push: true
           file: ./Dockerfile-fromcache
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=fromcache-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
+          cache-to: type=gha,mode=max,scope=fromcache-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}       
             CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
