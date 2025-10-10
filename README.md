@@ -35,7 +35,7 @@ High-level flow (example using JDK 17 as the default):
                   ┌──────────────────────┴────────────────────────────────┐
                   │                                                       │
   ┌──────────────────────────────────────┐              ┌──────────────────────────────────────┐
-  │  Dockerfile-base (8-jdk-noble)       │  (fast)      │  Dockerfile-base (11-jdk-noble)      │  (fast)
+  │  Dockerfile      (8-jdk-noble)       │  (fast)      │  Dockerfile      (11-jdk-noble)      │  (fast)
   │  - JDK + Node + Maven (no cache)     │              │  - JDK + Node + Maven (no cache)     │
   └───────────────┬──────────────────────┘              └───────────────┬──────────────────────┘
                   │                                                     │
@@ -54,28 +54,30 @@ Key idea: warm the Maven cache once in a default image, then other images copy t
 
 ## Build image locally
 
-From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:eclipse-temurin-11-jdk-noble-node`)
+From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base`)
 
 ```bash
 docker buildx build \
   --platform linux/amd64 \
   --build-arg REFRESHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  -t ghcr.io/jahia/jahia-docker-mvn-cache:eclipse-temurin-11-jdk-noble-node \
-  -f Dockerfile-11-jdk-noble-node \
+  --build-arg BASE_TAG="11-jdk-noble" \
+  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base \
+  -f Dockerfile \
   --push \
   .
 ```
 
-Once the base image is ready, build the maven cache image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-mvn`)
+Once the base image is ready, build the maven cache image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-mvn-loaded`)
 
 ```bash
 docker buildx build \
   --platform linux/amd64 \
+  --build-arg SRC_IMAGE="ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base" \
   --load \
   --ssh default \
   --pull \
-  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-mvn \
-  -f Dockerfile \
+  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-mvn-loaded \
+  -f Dockerfile-mvn \
   .
 ```
 
@@ -85,5 +87,5 @@ Finally, open a bash session inside the container
 docker run --rm -it \
   --platform linux/amd64 \
   --entrypoint /bin/sh \
-  ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-mvn
+  ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-mvn-loaded
 ```
