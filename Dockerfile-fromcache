@@ -1,5 +1,5 @@
 ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base
-ARG CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-noble-node-base-mvn-loaded
+ARG CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-noble-mvn-loaded
 
 FROM $CACHE_IMAGE AS cache
 
