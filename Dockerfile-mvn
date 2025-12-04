@@ -4,7 +4,9 @@ FROM $SRC_IMAGE
 LABEL maintainer="Jahia"
 
 ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
-ARG MVN_CMD="mvn -B -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins"
+# Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
+ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
+ARG MVN_CMD="mvn -B  -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
 
 # Warm up the Maven cache from the private repository (SSH key is provided at build time)
 # Fail-fast: any failing command will stop the build
@@ -12,21 +14,22 @@ RUN --mount=type=ssh bash -lc '\
     set -euo pipefail; \
     git clone git@github.com:Jahia/jahia-private.git && \
     cd jahia-private && \
-    echo "Resolving dependencies for the default branch" \
-    ${MVN_CMD} && \
-    for version in '"$JAHIA_VERSIONS"'; do \
+    echo "Extracting version from POM" && \
+    DEFAULT_VERSION=$(mvn -B -s ../maven.settings.xml help:evaluate -Dexpression=project.version -q -DforceStdout) && \
+    echo "Resolving dependencies for the default version (${DEFAULT_VERSION})" && \
+    ${MVN_CMD}; \
+    for version in ${JAHIA_VERSIONS}; do \
         echo "Checking out and resolving dependencies for JAHIA_${version//./_}"; \
         git checkout -b JAHIA_${version//./_} JAHIA_${version//./_} && \
         ${MVN_CMD}; \
     done && \
+    JAHIA_VERSIONS="${DEFAULT_VERSION} '"$JAHIA_VERSIONS"'" && \
     cd .. && \
-    rm -rf jahia-private' && \
-    # Create a dummy Maven project, with org.jahia.modules:jahia-modules as parent, for each version of JAHIA_VERSIONS \
-    bash -lc '\
-    set -euo pipefail; \
+    rm -rf jahia-private && \
+    echo "Create a dummy Maven project, with org.jahia.modules:jahia-modules as parent, for each version of JAHIA_VERSIONS" && \
     mkdir -p dummy-project && \
     cd dummy-project && \
-    for version in '"$JAHIA_VERSIONS"'; do \
+    for version in ${JAHIA_VERSIONS}; do \
         echo "Creating POM for Jahia version $version"; \
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > pom.xml && \
         echo "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" >> pom.xml && \
@@ -40,11 +43,11 @@ RUN --mount=type=ssh bash -lc '\
         echo "    <artifactId>dummy-project</artifactId>" >> pom.xml && \
         echo "    <version>1.0.0</version>" >> pom.xml && \
         echo "</project>" >> pom.xml && \
+        cat pom.xml && \
         echo "Resolving dependencies for Jahia version $version"; \
         ${MVN_CMD}; \
     done && \
     cd .. && \
-    rm -rf dummy-project' && \
-    # Remove SNAPSHOT dependencies from the local Maven repository as, by nature, they are supposed to change \
-    bash -lc '\
+    rm -rf dummy-project && \
+    echo "Remove SNAPSHOT dependencies from the local Maven repository as, by nature, they are supposed to change" && \
     find ~/.m2/repository -name "*-SNAPSHOT" -type d -exec rm -rf {} + 2>/dev/null || true'
