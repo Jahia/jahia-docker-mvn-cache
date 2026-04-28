@@ -1,3 +1,4 @@
+## syntax=docker/dockerfile:1.7
 ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-noble-node-base
 
 FROM $SRC_IMAGE
@@ -7,6 +8,13 @@ ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
 # Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
 ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
 ARG MVN_CMD="mvn -B  -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
+ARG NVD_DATAFEED_URL="https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/"
+ARG CISA_KEV_URL="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+ARG ODC_DATA_DIR="/opt/owasp/dependency-check-data"
+ARG SONAR_USER_HOME="/opt/sonar"
+
+COPY sonar-warmup/ /opt/sonar-warmup/
+COPY maven.settings.xml ./
 
 # Warm up the Maven cache from the private repository (SSH key is provided at build time)
 # Fail-fast: any failing command will stop the build
@@ -29,6 +37,7 @@ RUN --mount=type=ssh bash -lc '\
     echo "Create a dummy Maven project, with org.jahia.modules:jahia-modules as parent, for each version of JAHIA_VERSIONS" && \
     mkdir -p dummy-project && \
     cd dummy-project && \
+    rm -f /tmp/odc-warmup-pom.xml && \
     for version in ${JAHIA_VERSIONS}; do \
         echo "Creating POM for Jahia version $version"; \
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > pom.xml && \
@@ -43,6 +52,7 @@ RUN --mount=type=ssh bash -lc '\
         echo "    <artifactId>dummy-project</artifactId>" >> pom.xml && \
         echo "    <version>1.0.0</version>" >> pom.xml && \
         echo "</project>" >> pom.xml && \
+        if [[ ! -f /tmp/odc-warmup-pom.xml ]]; then cp pom.xml /tmp/odc-warmup-pom.xml; fi && \
         cat pom.xml && \
         echo "Resolving dependencies for Jahia version $version"; \
         ${MVN_CMD}; \
@@ -51,3 +61,72 @@ RUN --mount=type=ssh bash -lc '\
     rm -rf dummy-project && \
     echo "Remove SNAPSHOT dependencies from the local Maven repository as, by nature, they are supposed to change" && \
     find ~/.m2/repository -name "*-SNAPSHOT" -type d -exec rm -rf {} + 2>/dev/null || true'
+
+# Pre-warm OWASP Dependency-Check data (NVD + KEV) and Sonatype Guide cache.
+# Secrets are mounted at build time via BuildKit and are not persisted in image layers.
+RUN --mount=type=secret,id=nvd_api_key,required=false \
+    --mount=type=secret,id=oss_username,required=false \
+    --mount=type=secret,id=oss_token,required=false \
+    bash -lc '\
+        set -euo pipefail; \
+        mkdir -p "${ODC_DATA_DIR}" && \
+        WARMUP_POM="/tmp/odc-warmup-pom.xml"; \
+        test -s "${WARMUP_POM}"; \
+        NVD_API_ARGS=""; \
+        if [[ -f /run/secrets/nvd_api_key ]] && [[ -s /run/secrets/nvd_api_key ]]; then \
+            export NVD_API_KEY=$(cat /run/secrets/nvd_api_key); \
+            NVD_API_ARGS="-DnvdApiKeyEnvironmentVariable=NVD_API_KEY"; \
+        fi; \
+        if [[ -f /run/secrets/oss_username ]] && [[ -s /run/secrets/oss_username ]] \
+            && [[ -f /run/secrets/oss_token ]] && [[ -s /run/secrets/oss_token ]]; then \
+            export OSS_INDEX_USERNAME=$(cat /run/secrets/oss_username); \
+            export OSS_INDEX_PASSWORD=$(cat /run/secrets/oss_token); \
+            OSS_ARGS="-DossIndexServerId=jahia-oss-index -DossIndexAnalyzerUrl=https://api.guide.sonatype.com -DossIndexAnalyzerUseCache=true"; \
+        else \
+            OSS_ARGS="-DossIndexAnalyzerEnabled=false"; \
+        fi; \
+        mvn -B -s ./maven.settings.xml -f "${WARMUP_POM}" org.owasp:dependency-check-maven:12.2.1:aggregate \
+            -DdataDirectory=${ODC_DATA_DIR} \
+            -DnvdDatafeedUrl=${NVD_DATAFEED_URL} \
+            -DknownExploitedUrl=${CISA_KEV_URL} \
+            -Dformats=HTML,JSON \
+            -DretireJsAnalyzerEnabled=false \
+            -DnodeAnalyzerEnabled=false \
+            -DassemblyAnalyzerEnabled=false \
+            -DyarnAuditAnalyzerEnabled=false \
+            ${NVD_API_ARGS} \
+            ${OSS_ARGS}; \
+        chmod -R a+rX "${ODC_DATA_DIR}"'
+
+# Sonar plugin cache prewarm for both Java and JavaScript/TypeScript projects.
+# Sonar connection is configured via maven.settings.xml profile using env vars
+# sourced from BuildKit secrets.
+RUN --mount=type=secret,id=sonar_url,required=true \
+    --mount=type=secret,id=sonar_token,required=true \
+    bash -lc '\
+        set -euo pipefail; \
+        mkdir -p "${SONAR_USER_HOME}/cache"; \
+        test -s /run/secrets/sonar_url; \
+        test -s /run/secrets/sonar_token; \
+        export SONAR_URL=$(cat /run/secrets/sonar_url); \
+        export SONAR_TOKEN=$(cat /run/secrets/sonar_token); \
+        WARMUP_POM="/tmp/odc-warmup-pom.xml"; \
+        test -s "${WARMUP_POM}"; \
+        rm -rf /tmp/sonar-warmup-all; \
+        mkdir -p /tmp/sonar-warmup-all; \
+        cp -r /opt/sonar-warmup/. /tmp/sonar-warmup-all/; \
+        cp "${WARMUP_POM}" /tmp/sonar-warmup-all/pom.xml; \
+        chmod +x /tmp/sonar-warmup-all/scripts/warmup.sh; \
+        git -C /tmp/sonar-warmup-all init && \
+        git -C /tmp/sonar-warmup-all add -A && \
+        git -C /tmp/sonar-warmup-all -c user.email="warmup@jahia.com" -c user.name="warmup" commit -m "warmup"; \
+        mvn -B -s ./maven.settings.xml -f /tmp/sonar-warmup-all/pom.xml \
+            -Psonar-connection \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:5.6.0.6792:sonar \
+            -Dsonar.projectKey=jahia-docker-cache-warmup-all \
+            -Dsonar.sources=src,.github,scripts,Dockerfile,pom.xml \
+            -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json \
+            -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html \
+            -Dsonar.userHome=${SONAR_USER_HOME}; \
+        chmod -R a+rX "${SONAR_USER_HOME}"; \
+        rm -rf /tmp/sonar-warmup-all'

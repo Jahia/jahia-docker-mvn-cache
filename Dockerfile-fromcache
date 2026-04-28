@@ -7,3 +7,5 @@ FROM $SRC_IMAGE
 LABEL maintainer="Jahia"
 
 COPY --from=cache /root/.m2 /root/.m2
+COPY --from=cache /opt/owasp/dependency-check-data /opt/owasp/dependency-check-data
+COPY --from=cache /opt/sonar/cache /opt/sonar/cache
