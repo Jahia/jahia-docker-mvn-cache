@@ -1,0 +1,7 @@
+name: Warmup
+on: workflow_dispatch
+jobs:
+  warmup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "warmup"
