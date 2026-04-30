@@ -1,4 +1,4 @@
-## syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7
 ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-noble-node-base
 
 FROM $SRC_IMAGE

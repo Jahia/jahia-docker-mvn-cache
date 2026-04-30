@@ -1,2 +1,4 @@
+# WARMUP FIXTURE — Dummy YAML file used only at Docker image build time to trigger
+# the SonarQube YAML analyzer download. It is never used in production.
 service:
   warmup: true

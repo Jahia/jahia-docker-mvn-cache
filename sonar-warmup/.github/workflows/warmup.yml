@@ -1,3 +1,8 @@
+# WARMUP FIXTURE — This file is not a real GitHub Actions workflow.
+# It exists solely to make SonarQube download the analyzer for GitHub Actions YAML files
+# during the Docker image build-time cache warmup. Because it lives inside
+# sonar-warmup/.github/workflows/ (not at the repository root), it is never
+# picked up or executed by GitHub Actions.
 name: Warmup
 on: workflow_dispatch
 jobs:
