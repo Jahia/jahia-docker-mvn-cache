@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-noble-node-base
 
 FROM $SRC_IMAGE
@@ -7,6 +8,25 @@ ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
 # Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
 ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
 ARG MVN_CMD="mvn -B  -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
+ARG ODC_MAVEN_PLUGIN_VERSION="12.2.1"
+ARG SONAR_MAVEN_PLUGIN_VERSION="5.6.0.6792"
+ARG NVD_DATAFEED_URL="https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/"
+ARG CISA_KEV_URL="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+ARG ODC_DATA_DIR="/opt/owasp/dependency-check-data"
+ARG SONAR_USER_HOME="/opt/sonar"
+ARG SAST_WARMUP_DIR="/tmp/sast-warmup-all"
+ARG SAST_WARMUP_POM="/tmp/sast-warmup-all/pom.xml"
+ARG WARMUP_PROJECT_ID="jahia-docker-cache-warmup-all"
+ARG WARMUP_PROJECT_LABEL="Jahia Docker Cache Warmup"
+
+# Expose pinned plugin versions for downstream jobs running inside this image.
+RUN printf 'DEPENDENCY_CHECK_MAVEN_PLUGIN_VERSION=%s\nSONAR_MAVEN_PLUGIN_VERSION=%s\n' \
+    "${ODC_MAVEN_PLUGIN_VERSION}" "${SONAR_MAVEN_PLUGIN_VERSION}" > /opt/jahia-sast-versions.env
+
+# Fixture project used only to trigger Sonar analyzer/plugin downloads
+# across multiple file types during image build cache warmup.
+COPY sonar-warmup/ /opt/sonar-warmup/
+COPY maven.settings.xml ./
 
 # Warm up the Maven cache from the private repository (SSH key is provided at build time)
 # Fail-fast: any failing command will stop the build
@@ -43,6 +63,8 @@ RUN --mount=type=ssh bash -lc '\
         echo "    <artifactId>dummy-project</artifactId>" >> pom.xml && \
         echo "    <version>1.0.0</version>" >> pom.xml && \
         echo "</project>" >> pom.xml && \
+        # Keep one warmup project pom reused by both OWASP and Sonar warmup blocks.
+        if [[ ! -f ${SAST_WARMUP_POM} ]]; then mkdir -p ${SAST_WARMUP_DIR} && cp pom.xml ${SAST_WARMUP_POM}; fi && \
         cat pom.xml && \
         echo "Resolving dependencies for Jahia version $version"; \
         ${MVN_CMD}; \
@@ -51,3 +73,68 @@ RUN --mount=type=ssh bash -lc '\
     rm -rf dummy-project && \
     echo "Remove SNAPSHOT dependencies from the local Maven repository as, by nature, they are supposed to change" && \
     find ~/.m2/repository -name "*-SNAPSHOT" -type d -exec rm -rf {} + 2>/dev/null || true'
+
+# Pre-warm OWASP Dependency-Check data (NVD + KEV) and Sonatype Guide cache.
+# Secrets are mounted at build time via BuildKit and are not persisted in image layers.
+RUN --mount=type=secret,id=nvd_api_key,required=false \
+    --mount=type=secret,id=oss_username,required=false \
+    --mount=type=secret,id=oss_token,required=false \
+    bash -lc '\
+        set -euo pipefail; \
+        mkdir -p "${ODC_DATA_DIR}" && \
+        test -s "${SAST_WARMUP_POM}"; \
+        NVD_API_ARGS=""; \
+        if [[ -f /run/secrets/nvd_api_key ]] && [[ -s /run/secrets/nvd_api_key ]]; then \
+            export NVD_API_KEY="$(< /run/secrets/nvd_api_key)"; \
+            NVD_API_ARGS="-DnvdApiKeyEnvironmentVariable=NVD_API_KEY"; \
+        fi; \
+        if [[ -f /run/secrets/oss_username ]] && [[ -s /run/secrets/oss_username ]] \
+            && [[ -f /run/secrets/oss_token ]] && [[ -s /run/secrets/oss_token ]]; then \
+            export OSS_INDEX_USERNAME="$(< /run/secrets/oss_username)"; \
+            export OSS_INDEX_PASSWORD="$(< /run/secrets/oss_token)"; \
+            OSS_ARGS="-DossIndexServerId=jahia-oss-index -DossIndexAnalyzerUrl=https://api.guide.sonatype.com -DossIndexAnalyzerUseCache=true"; \
+        else \
+            OSS_ARGS="-DossIndexAnalyzerEnabled=false"; \
+        fi; \
+        mvn -B -s ./maven.settings.xml -f "${SAST_WARMUP_POM}" org.owasp:dependency-check-maven:${ODC_MAVEN_PLUGIN_VERSION}:aggregate \
+            -DdataDirectory=${ODC_DATA_DIR} \
+            -DnvdDatafeedUrl=${NVD_DATAFEED_URL} \
+            -DknownExploitedUrl=${CISA_KEV_URL} \
+            -Dformats=HTML,JSON \
+            -DretireJsAnalyzerEnabled=false \
+            -DnodeAnalyzerEnabled=false \
+            -DassemblyAnalyzerEnabled=false \
+            -DyarnAuditAnalyzerEnabled=false \
+            ${NVD_API_ARGS} \
+            ${OSS_ARGS}; \
+        chmod -R a+rX "${ODC_DATA_DIR}"'
+
+# Sonar plugin cache prewarm for both Java and JavaScript/TypeScript projects.
+# Sonar connection is configured via maven.settings.xml profile using env vars
+# sourced from BuildKit secrets.
+RUN --mount=type=secret,id=sonar_url,required=false \
+    --mount=type=secret,id=sonar_token,required=false \
+    bash -lc '\
+        set -euo pipefail; \
+        mkdir -p "${SONAR_USER_HOME}/cache"; \
+        if [[ -s /run/secrets/sonar_url ]] && [[ -s /run/secrets/sonar_token ]]; then \
+            export SONAR_URL="$(< /run/secrets/sonar_url)"; \
+            export SONAR_TOKEN="$(< /run/secrets/sonar_token)"; \
+            test -s "${SAST_WARMUP_POM}"; \
+            cp -r /opt/sonar-warmup/. ${SAST_WARMUP_DIR}/; \
+            chmod +x ${SAST_WARMUP_DIR}/scripts/warmup.sh; \
+            mvn -B -s ./maven.settings.xml -f "${SAST_WARMUP_POM}" \
+                -Psonar-connection \
+                org.sonarsource.scanner.maven:sonar-maven-plugin:${SONAR_MAVEN_PLUGIN_VERSION}:sonar \
+                -Dsonar.projectKey=${WARMUP_PROJECT_ID} \
+                -Dsonar.projectName="${WARMUP_PROJECT_LABEL}" \
+                -Dsonar.sources=src,.github,scripts,Dockerfile,pom.xml \
+                -Dsonar.scm.disabled=true \
+                -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json \
+                -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html \
+                -Dsonar.userHome=${SONAR_USER_HOME}; \
+            chmod -R a+rX "${SONAR_USER_HOME}"; \
+        else \
+            echo "Skipping Sonar warmup: sonar_url/sonar_token BuildKit secrets not provided"; \
+        fi; \
+        rm -rf ${SAST_WARMUP_DIR}'

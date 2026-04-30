@@ -94,8 +94,16 @@ jobs:
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
           cache-from: type=gha,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
           cache-to: type=gha,mode=max,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
+          secrets: |
+            nvd_api_key=${{ secrets.NVD_APIKEY }}
+            oss_username=${{ secrets.OSS_USERNAME }}
+            oss_token=${{ secrets.OSS_API_TOKEN }}
+            sonar_url=${{ secrets.SONAR_URL }}
+            sonar_token=${{ secrets.SONAR_TOKEN }}
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
+            NVD_DATAFEED_URL=${{ vars.NVD_DATAFEED_URL || 'https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/' }}
+            CISA_KEV_URL=${{ vars.CISA_KNOWN_EXPLOITED_VULN_URL || 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json' }}
 
   build-additional:
     name: Build and push Additional docker images

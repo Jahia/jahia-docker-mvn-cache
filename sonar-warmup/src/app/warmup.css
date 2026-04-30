@@ -1,0 +1,3 @@
+/* WARMUP FIXTURE — Dummy CSS file used only at Docker image build time to trigger
+   the SonarQube CSS analyzer download. It is never served in production. */
+body { color: #000; }
