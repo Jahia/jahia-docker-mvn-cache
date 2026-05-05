@@ -7,3 +7,7 @@ FROM $SRC_IMAGE
 LABEL maintainer="Jahia"
 
 COPY --from=cache /root/.m2 /root/.m2
+# The paths below must match the dataDirectory values configured in the sonar-analysis action
+# (jahia-modules-action): ODC_DATA_DIR for OWASP and SONAR_USER_HOME/cache for Sonar.
+COPY --from=cache /opt/owasp/dependency-check-data /opt/owasp/dependency-check-data
+COPY --from=cache /opt/sonar/cache /opt/sonar/cache

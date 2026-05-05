@@ -1,0 +1,4 @@
+{
+  "_comment": "WARMUP FIXTURE — Dummy JSON file used only at Docker image build time to trigger the SonarQube JSON analyzer download. It is never used in production.",
+  "warmup": true
+}
