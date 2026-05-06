@@ -8,7 +8,7 @@ ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
 # Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
 ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
 ARG MVN_CMD="mvn -B  -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
-ARG ODC_MAVEN_PLUGIN_VERSION="12.2.1"
+ARG ODC_MAVEN_PLUGIN_VERSION="12.2.2"
 ARG SONAR_MAVEN_PLUGIN_VERSION="5.6.0.6792"
 ARG NVD_DATAFEED_URL="https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/"
 ARG CISA_KEV_URL="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
