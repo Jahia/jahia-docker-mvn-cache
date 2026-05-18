@@ -1,4 +1,4 @@
-ARG BASE_TAG=17-jdk-noble
+ARG BASE_TAG=17-jdk-resolute
 
 FROM eclipse-temurin:$BASE_TAG
 LABEL maintainer="Jahia"
@@ -6,7 +6,7 @@ LABEL maintainer="Jahia"
 ARG REFRESHED_AT
 ENV REFRESHED_AT=$REFRESHED_AT
 
-ARG MAVEN_VERSION=3.9.11
+ARG MAVEN_VERSION=3.9.16
 ENV MAVEN_HOME=/opt/maven \
   MAVEN_CONFIG=/root/.m2
 
@@ -14,7 +14,6 @@ RUN apt-get update \
   && apt-get install -y \
     nodejs \
     npm \
-    yarn \
     curl \
     ca-certificates \
     git \
@@ -22,6 +21,7 @@ RUN apt-get update \
     bash \
     tar \
   && npm i -g corepack \
+  && corepack prepare yarn@1 --activate \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 # Installed corepack separately because not installed when using apt or brew

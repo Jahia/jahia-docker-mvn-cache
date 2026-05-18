@@ -11,7 +11,7 @@ on:
     types: [opened, synchronize, reopened]
 
 env:
-  DEFAULT_VERSION: 17-jdk-noble
+  DEFAULT_VERSION: 17-jdk-resolute
 
 jobs:
   # Builds a base image containing the maven cache
@@ -112,8 +112,8 @@ jobs:
     strategy:
       matrix:
         jdk_version:
-          - "8-jdk-noble"
-          - "11-jdk-noble"
+          - "8-jdk-resolute"
+          - "11-jdk-resolute"
     steps:
       - uses: actions/checkout@v5
       - name: Login to GitHub registry
@@ -196,11 +196,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - container_version: "8-jdk-noble-mvn-loaded"
+          - container_version: "8-jdk-resolute-mvn-loaded"
             expected_java_version: "1.8"
-          - container_version: "11-jdk-noble-mvn-loaded"
+          - container_version: "11-jdk-resolute-mvn-loaded"
             expected_java_version: "11"
-          - container_version: "17-jdk-noble-mvn-loaded"
+          - container_version: "17-jdk-resolute-mvn-loaded"
             expected_java_version: "17"
     container:
       image: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.container_version }}
