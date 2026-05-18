@@ -20,7 +20,7 @@ High-level flow (example using JDK 17 as the default):
 
 ```
                          ┌──────────────────────────────────────┐
-                         │  Dockerfile (17-jdk-noble)           │  (fast)
+                         │  Dockerfile (17-jdk-resolute)           │  (fast)
                          │  - JDK + Node + Maven (no cache)     │
                          └───────────────┬──────────────────────┘
                                          │ build & push base image
@@ -35,7 +35,7 @@ High-level flow (example using JDK 17 as the default):
                   ┌──────────────────────┴────────────────────────────────┐
                   │                                                       │
   ┌──────────────────────────────────────┐              ┌──────────────────────────────────────┐
-  │  Dockerfile      (8-jdk-noble)       │  (fast)      │  Dockerfile      (11-jdk-noble)      │  (fast)
+  │  Dockerfile      (8-jdk-resolute)       │  (fast)      │  Dockerfile      (11-jdk-resolute)      │  (fast)
   │  - JDK + Node + Maven (no cache)     │              │  - JDK + Node + Maven (no cache)     │
   └───────────────┬──────────────────────┘              └───────────────┬──────────────────────┘
                   │                                                     │
@@ -54,29 +54,29 @@ Key idea: warm the Maven cache once in a default image, then other images copy t
 
 ## Build image locally
 
-From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base`)
+From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-node-base`)
 
 ```bash
 docker buildx build \
   --platform linux/amd64 \
   --build-arg REFRESHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  --build-arg BASE_TAG="11-jdk-noble" \
-  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base \
+  --build-arg BASE_TAG="11-jdk-resolute" \
+  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-node-base \
   -f Dockerfile \
   --push \
   .
 ```
 
-Once the base image is ready, build the maven cache image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-mvn-loaded`)
+Once the base image is ready, build the maven cache image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-mvn-loaded`)
 
 ```bash
 docker buildx build \
   --platform linux/amd64 \
-  --build-arg SRC_IMAGE="ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-node-base" \
+  --build-arg SRC_IMAGE="ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-node-base" \
   --load \
   --ssh default \
   --pull \
-  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-mvn-loaded \
+  -t ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-mvn-loaded \
   -f Dockerfile-mvn \
   .
 ```
@@ -87,5 +87,5 @@ Finally, open a bash session inside the container
 docker run --rm -it \
   --platform linux/amd64 \
   --entrypoint /bin/sh \
-  ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-noble-mvn-loaded
+  ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-mvn-loaded
 ```

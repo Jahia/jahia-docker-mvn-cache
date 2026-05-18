@@ -1,4 +1,4 @@
-ARG BASE_TAG=17-jdk-noble
+ARG BASE_TAG=17-jdk-resolute
 
 FROM eclipse-temurin:$BASE_TAG
 LABEL maintainer="Jahia"
@@ -6,7 +6,7 @@ LABEL maintainer="Jahia"
 ARG REFRESHED_AT
 ENV REFRESHED_AT=$REFRESHED_AT
 
-ARG MAVEN_VERSION=3.9.11
+ARG MAVEN_VERSION=3.9.16
 ENV MAVEN_HOME=/opt/maven \
   MAVEN_CONFIG=/root/.m2
 
