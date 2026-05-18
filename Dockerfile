@@ -14,7 +14,6 @@ RUN apt-get update \
   && apt-get install -y \
     nodejs \
     npm \
-    yarn \
     curl \
     ca-certificates \
     git \
@@ -22,6 +21,7 @@ RUN apt-get update \
     bash \
     tar \
   && npm i -g corepack \
+  && npm i -g yarn \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 # Installed corepack separately because not installed when using apt or brew
