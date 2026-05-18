@@ -21,7 +21,7 @@ RUN apt-get update \
     bash \
     tar \
   && npm i -g corepack \
-  && npm i -g yarn \
+  && corepack prepare yarn@1 --activate \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 # Installed corepack separately because not installed when using apt or brew
