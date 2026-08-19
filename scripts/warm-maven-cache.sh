@@ -18,20 +18,50 @@
 
 set -euo pipefail
 
+# buildx keeps only the first 2 MiB of a step's output, and the resolutions below produce far
+# more than that. Every outcome is therefore recorded in this file, which a later step prints
+# from its own, short output. The file stays in the image, so a job can ask what it holds.
+REPORT="${REPORT:-/opt/jahia-mvn-cache-report.txt}"   # overridable so the script can be run outside a build
+
+record() { printf '%s\n' "$*" >> "${REPORT}"; }
+
+# Resolve, and record the outcome under the given label.
+resolve() {
+    local label="$1"
+    if ${MVN_CMD}; then
+        record "  ok      ${label}"
+    else
+        record "  FAILED  ${label}"
+    fi
+}
+
 # $MVN_CMD is a full command line, so it is deliberately left unquoted at every call site.
+: > "${REPORT}"
+record "Jahia Maven cache warmup"
+
 git clone git@github.com:Jahia/jahia-private.git
 cd jahia-private
+record "jahia-private $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HEAD)"
+record ""
+record "Reactor resolutions:"
 
 echo "Extracting version from POM"
 DEFAULT_VERSION=$(mvn -B -s ../maven.settings.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
 
 echo "Resolving dependencies for the default version (${DEFAULT_VERSION})"
 ${MVN_CMD}
+record "  ok      ${DEFAULT_VERSION} (default branch)"
 
 for version in ${JAHIA_VERSIONS}; do
     echo "Checking out and resolving dependencies for JAHIA_${version//./_}"
-    git checkout -b "JAHIA_${version//./_}" "JAHIA_${version//./_}" && ${MVN_CMD} || true
+    if git checkout -b "JAHIA_${version//./_}" "JAHIA_${version//./_}"; then
+        resolve "${version}"
+    else
+        record "  NO TAG  ${version}"
+    fi
 done
+record ""
+record "Parent chain resolutions:"
 
 # The default version is warmed through the parent chain as well.
 JAHIA_VERSIONS="${DEFAULT_VERSION} ${JAHIA_VERSIONS}"
@@ -66,7 +96,7 @@ POM
     fi
     cat pom.xml
     echo "Resolving dependencies for Jahia version $version"
-    ${MVN_CMD} || true
+    resolve "${version}"
 done
 
 cd ..
@@ -74,3 +104,5 @@ rm -rf dummy-project
 
 echo "Remove SNAPSHOT dependencies from the local Maven repository as, by nature, they are supposed to change"
 find ~/.m2/repository -name "*-SNAPSHOT" -type d -exec rm -rf {} + 2>/dev/null || true
+record ""
+record "SNAPSHOT artifacts were removed after the resolutions above."

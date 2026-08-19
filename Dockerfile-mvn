@@ -7,7 +7,8 @@ LABEL maintainer="Jahia"
 ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
 # Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
 ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
-ARG MVN_CMD="mvn -B  -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
+# -q keeps the step under the 2 MiB of output that buildx retains. Errors still print.
+ARG MVN_CMD="mvn -B -q -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
 ARG ODC_MAVEN_PLUGIN_VERSION="12.2.2"
 ARG SONAR_MAVEN_PLUGIN_VERSION="5.6.0.6792"
 ARG NVD_DATAFEED_URL="https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/"
@@ -32,6 +33,9 @@ COPY maven.settings.xml ./
 # The script's header records which failures stop the build and which ones are tolerated.
 COPY scripts/warm-maven-cache.sh /opt/scripts/warm-maven-cache.sh
 RUN --mount=type=ssh bash -l /opt/scripts/warm-maven-cache.sh
+
+# Printed from its own step, where the output is short enough to survive in full.
+RUN cat /opt/jahia-mvn-cache-report.txt
 
 # Pre-warm OWASP Dependency-Check data (NVD + KEV) and Sonatype Guide cache.
 # Secrets are mounted at build time via BuildKit and are not persisted in image layers.
