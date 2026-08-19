@@ -52,6 +52,45 @@ High-level flow (example using JDK 17 as the default):
 
 Key idea: warm the Maven cache once in a default image, then other images copy the `.m2` directory from that image instead of running Maven again.
 
+## Which Jahia versions are warmed
+
+`Dockerfile-mvn` declares two lists of versions, because the two warmup steps do not cost the same.
+
+`JAHIA_CORE_VERSIONS` holds tags that `scripts/warm-maven-cache.sh` checks out in
+[Jahia/jahia-private](https://github.com/Jahia/jahia-private). Each tag is resolved as a full
+reactor, which takes about 3 minutes. The result is a wide set of the third-party artifacts that
+the product depends on. Keep this list short and keep it on the recent release lines.
+
+`JAHIA_MODULE_PARENT_VERSIONS` holds versions of the `org.jahia.modules:jahia-modules` parent.
+Each entry is resolved through a throwaway pom that declares the parent. The step downloads the
+parent pom, the plugins it pins, and `org.jahia.server:jahia-impl` and `jahia-taglib` at the same
+version. This is the chain that a module build walks, so this list is the one that decides whether
+a module repository gets a cache hit.
+
+The parent step runs on the union of both lists, plus the version on the default branch of
+`Jahia/jahia-private`. A version that appears in both lists is resolved once.
+
+### How to choose a version for the parent list
+
+A version belongs in `JAHIA_MODULE_PARENT_VERSIONS` when module repositories declare it. To
+recount, read the `<parent>` version in the root `pom.xml` of each `Jahia` module repository, and
+keep the repositories that are not archived. The list holds every version that at least 5 of those
+repositories declare. It also holds the versions that were already warmed, and the
+patch versions of the current release line.
+
+The tags of `Jahia/jahia-private` are not the right source for this list. Most tags are the parent
+of no module repository, and a module can declare a parent version that was never a product tag.
+
+### When a version cannot be resolved
+
+`scripts/warm-maven-cache.sh` reports a version it cannot resolve and continues. The end of the
+build log lists every version that was not warmed, and the Actions summary shows a warning for
+each one. A build on such a version still succeeds, and it fetches from the remote repository
+instead of the cache.
+
+Two failures do stop the image build: the clone of `Jahia/jahia-private`, and the resolution of the
+version on its default branch.
+
 ## Build image locally
 
 From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-node-base`)
