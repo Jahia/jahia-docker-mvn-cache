@@ -36,6 +36,12 @@ jobs:
 
       # If the workflow is executed outside of main (the default branch)
       # Then a suffix corresponding to the branch name is added to the image (or the PR number if it's a PR)
+      #
+      # The suffix applies to the image tags only, never to a buildx cache scope. GitHub already
+      # partitions the Actions cache by ref: a run reads the cache of its base branch, and a cache
+      # written by a pull request lands on refs/pull/N/merge where only that pull request can read
+      # it. So the scopes below stay suffix-free on purpose -- adding one would isolate nothing
+      # that GitHub does not already isolate, and would cost every pull request a cold build.
       - name: Define image suffix
         shell: bash
         run: |
@@ -73,8 +79,8 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-node-base${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha,scope=base-${{ env.DEFAULT_VERSION }}{{ env.IMAGE_SUFFIX }}
-          cache-to: type=gha,mode=max,scope=base-${{ env.DEFAULT_VERSION }}{{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha,scope=base-${{ env.DEFAULT_VERSION }}
+          cache-to: type=gha,mode=max,scope=base-${{ env.DEFAULT_VERSION }}
           build-args: |
             BASE_TAG=${{ env.DEFAULT_VERSION }}
 
@@ -92,8 +98,13 @@ jobs:
           push: true
           file: ./Dockerfile-mvn
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
-          cache-to: type=gha,mode=max,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}{{ env.IMAGE_SUFFIX }}
+          # This scope is keyed on the jahia-private HEAD resolved above, which moves several times
+          # a day. So unlike the hash-free scopes, this one misses whenever that repository has
+          # moved since the last build here -- a nightly after a commit there, and most pull
+          # request runs. The miss is the point: the cache has to follow the dependency set it was
+          # warmed from. The cost is a full warmup, about 915 s against 30 s on a hit.
+          cache-from: type=gha,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}
+          cache-to: type=gha,mode=max,scope=mvn-${{ env.DEFAULT_VERSION }}-hash-${{ steps.jahia-private-repo-hash.outputs.hash }}
           secrets: |
             nvd_api_key=${{ secrets.NVD_APIKEY }}
             oss_username=${{ secrets.OSS_USERNAME }}
@@ -131,6 +142,12 @@ jobs:
 
       # If the workflow is executed outside of main (the default branch)
       # Then a suffix corresponding to the branch name is added to the image (or the PR number if it's a PR)
+      #
+      # The suffix applies to the image tags only, never to a buildx cache scope. GitHub already
+      # partitions the Actions cache by ref: a run reads the cache of its base branch, and a cache
+      # written by a pull request lands on refs/pull/N/merge where only that pull request can read
+      # it. So the scopes below stay suffix-free on purpose -- adding one would isolate nothing
+      # that GitHub does not already isolate, and would cost every pull request a cold build.
       - name: Define image suffix
         shell: bash
         run: |
@@ -168,8 +185,8 @@ jobs:
           push: true
           file: ./Dockerfile
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha,scope=base-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
-          cache-to: type=gha,mode=max,scope=base-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha,scope=base-${{ matrix.jdk_version }}
+          cache-to: type=gha,mode=max,scope=base-${{ matrix.jdk_version }}
           build-args: |
             BASE_TAG=${{ matrix.jdk_version }}
 
@@ -180,8 +197,8 @@ jobs:
           push: true
           file: ./Dockerfile-fromcache
           tags: ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
-          cache-from: type=gha,scope=fromcache-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
-          cache-to: type=gha,mode=max,scope=fromcache-${{ matrix.jdk_version }}{{ env.IMAGE_SUFFIX }}
+          cache-from: type=gha,scope=fromcache-${{ matrix.jdk_version }}
+          cache-to: type=gha,mode=max,scope=fromcache-${{ matrix.jdk_version }}
           build-args: |
             SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ matrix.jdk_version }}-node-base${{ env.IMAGE_SUFFIX }}       
             CACHE_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:${{ env.DEFAULT_VERSION }}-mvn-loaded${{ env.IMAGE_SUFFIX }}
