@@ -4,7 +4,10 @@ ARG SRC_IMAGE=ghcr.io/jahia/jahia-docker-mvn-cache:17-jdk-resolute-node-base
 FROM $SRC_IMAGE
 LABEL maintainer="Jahia"
 
-ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
+# Tags of jahia-private checked out and resolved as a full product reactor. Decided by hand.
+# The versions of the jahia-modules parent live in module-parent-versions.txt, which a scheduled
+# job maintains from what the repositories using this image declare.
+ARG JAHIA_CORE_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
 # Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
 ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
 # --quiet keeps the step under the 2 MiB of output that buildx retains. Errors still print.
@@ -31,6 +34,7 @@ COPY maven.settings.xml ./
 
 # Warm up the Maven cache from the private repository (SSH key is provided at build time)
 # The script's header records which failures stop the build and which ones are tolerated.
+COPY module-parent-versions.txt /opt/module-parent-versions.txt
 COPY scripts/warm-maven-cache.sh /opt/scripts/warm-maven-cache.sh
 RUN --mount=type=ssh bash -l /opt/scripts/warm-maven-cache.sh
 
