@@ -19,36 +19,21 @@
 set -euo pipefail
 
 # buildx keeps only the first 2 MiB of a step's output, and the resolutions below produce far
-# more than that. Every outcome is therefore recorded in this file, which a later step prints
-# from its own, short output. The file stays in the image, so a job can ask what it holds.
+# more than that, so every outcome is recorded here and a later step prints this file instead.
 REPORT="${REPORT:-/opt/jahia-mvn-cache-report.txt}"   # overridable so the script can be run outside a build
-# The steps below change directory twice and delete both directories on the way out, so a
-# relative path would scatter the report across them and take most of it down with them —
-# leaving a green build and a report whose resolutions are simply absent.
+# Absolute, because the steps below change directory and then delete those directories.
 [[ ${REPORT} == /* ]] || REPORT="${PWD}/${REPORT}"
 
 record() { printf '%s\n' "$*" >> "${REPORT}"; }
 
-# One outcome line: result, version, the commit it was resolved at, and a note. Both trailing
-# fields are optional, and every combination has its own printf, so that no line carries
-# trailing blanks and no field is dropped. The commit is padded to a column only when a note
-# follows it, and the column is wider than git's current --short so that a longer abbreviation
-# does not push the note out of line.
-#
-# Only a reactor resolution has a commit to name. It checks out a tag, and a tag is a label that
-# can be moved, so the commit — not the version string — is what decides the artifact set that
-# got resolved. The parent chain has none: it resolves Maven coordinates from the repository,
-# after the clone below has been deleted.
+# result, version, then the commit it was resolved at and a note, both optional. A line with no
+# commit takes the short shape, so it does not end in the blanks of an empty column.
 outcome() {
-    local status="$1" version="$2" commit="${3-}" note="${4-}"
-    if [[ -n ${commit} && -n ${note} ]]; then
-        printf '  %-7s %-17s %-12s %s\n' "${status}" "${version}" "${commit}" "${note}" >> "${REPORT}"
-    elif [[ -n ${commit} ]]; then
-        printf '  %-7s %-17s %s\n' "${status}" "${version}" "${commit}" >> "${REPORT}"
-    elif [[ -n ${note} ]]; then
-        printf '  %-7s %-17s %s\n' "${status}" "${version}" "${note}" >> "${REPORT}"
+    local commit="${3-}" note="${4-}"
+    if [[ -n ${commit} ]]; then
+        printf '  %-7s %-17s %s\n' "$1" "$2" "${commit}${note:+   ${note}}" >> "${REPORT}"
     else
-        printf '  %-7s %s\n' "${status}" "${version}" >> "${REPORT}"
+        printf '  %-7s %s\n' "$1" "$2" >> "${REPORT}"
     fi
 }
 
@@ -61,19 +46,18 @@ resolve() {
     fi
 }
 
-# $MVN_CMD is a full command line, so it is deliberately left unquoted at every call site.
 : > "${REPORT}"
 record "Jahia Maven cache warmup"
 
+# $MVN_CMD is a full command line, so it is deliberately left unquoted at every call site.
 git clone git@github.com:Jahia/jahia-private.git
 cd jahia-private
-# The commit of this branch is on the default-version line below, like every other reactor line.
 record "jahia-private, default branch $(git rev-parse --abbrev-ref HEAD)"
 record ""
 record "Reactor resolutions:"
 
 echo "Extracting version from POM"
-DEFAULT_VERSION=$(mvn --batch-mode --settings ../maven.settings.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+DEFAULT_VERSION=$(mvn -B -s ../maven.settings.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
 
 echo "Resolving dependencies for the default version (${DEFAULT_VERSION})"
 ${MVN_CMD}
@@ -82,9 +66,7 @@ outcome "ok" "${DEFAULT_VERSION}" "$(git rev-parse --short HEAD)" "(default bran
 for version in ${JAHIA_VERSIONS}; do
     tag="JAHIA_${version//./_}"
     echo "Checking out and resolving dependencies for ${tag}"
-    # --detach rather than a branch per tag: nothing here needs a branch, and creating one made
-    # a repeated version fail on the name instead of the tag, which the report then blamed on a
-    # missing tag. Detached, a failure here really is a tag that is not there.
+    # Detached, so a repeated version fails on the tag rather than on a duplicate branch name.
     if git checkout --detach "${tag}"; then
         resolve "${version}" "$(git rev-parse --short HEAD)"
     else
