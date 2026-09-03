@@ -57,7 +57,7 @@ record ""
 record "Reactor resolutions:"
 
 echo "Extracting version from POM"
-DEFAULT_VERSION=$(mvn -B -s ../maven.settings.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+DEFAULT_VERSION=$(mvn --batch-mode --quiet --settings ../maven.settings.xml help:evaluate -Dexpression=project.version -DforceStdout)
 
 echo "Resolving dependencies for the default version (${DEFAULT_VERSION})"
 ${MVN_CMD}

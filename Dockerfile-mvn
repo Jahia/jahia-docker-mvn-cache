@@ -7,8 +7,8 @@ LABEL maintainer="Jahia"
 ARG JAHIA_VERSIONS="8.2.2.0 8.2.1.0 8.2.0.7 8.1.9.0 8.1.8.2"
 # Plugins not bound to any phase of the build lifecycle but with their versions set in the `pluginManagement` section of the parent POM
 ARG COMMON_GOALS="org.owasp:dependency-check-maven:help org.sonarsource.scanner.maven:sonar-maven-plugin:help"
-# -q keeps the step under the 2 MiB of output that buildx retains. Errors still print.
-ARG MVN_CMD="mvn -B -q -s ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
+# --quiet keeps the step under the 2 MiB of output that buildx retains. Errors still print.
+ARG MVN_CMD="mvn --batch-mode --quiet --settings ../maven.settings.xml dependency:resolve dependency:resolve-plugins ${COMMON_GOALS}"
 ARG ODC_MAVEN_PLUGIN_VERSION="12.2.2"
 ARG SONAR_MAVEN_PLUGIN_VERSION="5.6.0.6792"
 ARG NVD_DATAFEED_URL="https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/"
@@ -59,7 +59,7 @@ RUN --mount=type=secret,id=nvd_api_key,required=false \
         else \
             OSS_ARGS="-DossIndexAnalyzerEnabled=false"; \
         fi; \
-        mvn -B -s ./maven.settings.xml -f "${SAST_WARMUP_POM}" org.owasp:dependency-check-maven:${ODC_MAVEN_PLUGIN_VERSION}:aggregate \
+        mvn --batch-mode --settings ./maven.settings.xml --file "${SAST_WARMUP_POM}" org.owasp:dependency-check-maven:${ODC_MAVEN_PLUGIN_VERSION}:aggregate \
             -DdataDirectory=${ODC_DATA_DIR} \
             -DnvdDatafeedUrl=${NVD_DATAFEED_URL} \
             -DknownExploitedUrl=${CISA_KEV_URL} \
@@ -86,8 +86,8 @@ RUN --mount=type=secret,id=sonar_url,required=false \
             test -s "${SAST_WARMUP_POM}"; \
             cp -r /opt/sonar-warmup/. ${SAST_WARMUP_DIR}/; \
             chmod +x ${SAST_WARMUP_DIR}/scripts/warmup.sh; \
-            mvn -B -s ./maven.settings.xml -f "${SAST_WARMUP_POM}" \
-                -Psonar-connection \
+            mvn --batch-mode --settings ./maven.settings.xml --file "${SAST_WARMUP_POM}" \
+                --activate-profiles sonar-connection \
                 org.sonarsource.scanner.maven:sonar-maven-plugin:${SONAR_MAVEN_PLUGIN_VERSION}:sonar \
                 -Dsonar.projectKey=${WARMUP_PROJECT_ID} \
                 -Dsonar.projectName="${WARMUP_PROJECT_LABEL}" \
