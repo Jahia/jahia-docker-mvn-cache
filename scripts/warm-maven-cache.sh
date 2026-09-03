@@ -25,13 +25,30 @@ REPORT="${REPORT:-/opt/jahia-mvn-cache-report.txt}"   # overridable so the scrip
 
 record() { printf '%s\n' "$*" >> "${REPORT}"; }
 
-# Resolve, and record the outcome under the given label.
-resolve() {
-    local label="$1"
-    if ${MVN_CMD}; then
-        record "  ok      ${label}"
+# One outcome line: result, version, the commit it was resolved at, and a note. The trailing
+# fields are optional, and each shape has its own printf so that no line carries trailing blanks.
+#
+# Only a reactor resolution has a commit to name. It checks out a tag, and a tag is a label that
+# can be moved, so the commit — not the version string — is what decides the artifact set that
+# got resolved. The parent chain has none: it resolves Maven coordinates from the repository,
+# after the clone below has been deleted.
+outcome() {
+    local status="$1" version="$2" commit="${3-}" note="${4-}"
+    if [[ -z ${commit} ]]; then
+        printf '  %-7s %s\n' "${status}" "${version}" >> "${REPORT}"
+    elif [[ -z ${note} ]]; then
+        printf '  %-7s %-17s %s\n' "${status}" "${version}" "${commit}" >> "${REPORT}"
     else
-        record "  FAILED  ${label}"
+        printf '  %-7s %-17s %-10s  %s\n' "${status}" "${version}" "${commit}" "${note}" >> "${REPORT}"
+    fi
+}
+
+# Resolve, and record the outcome. $2, when given, is the commit HEAD sits at.
+resolve() {
+    if ${MVN_CMD}; then
+        outcome "ok" "$1" "${2-}"
+    else
+        outcome "FAILED" "$1" "${2-}"
     fi
 }
 
@@ -41,7 +58,8 @@ record "Jahia Maven cache warmup"
 
 git clone git@github.com:Jahia/jahia-private.git
 cd jahia-private
-record "jahia-private $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HEAD)"
+# The commit of this branch is on the default-version line below, like every other reactor line.
+record "jahia-private, default branch $(git rev-parse --abbrev-ref HEAD)"
 record ""
 record "Reactor resolutions:"
 
@@ -50,14 +68,14 @@ DEFAULT_VERSION=$(mvn --batch-mode --settings ../maven.settings.xml help:evaluat
 
 echo "Resolving dependencies for the default version (${DEFAULT_VERSION})"
 ${MVN_CMD}
-record "  ok      ${DEFAULT_VERSION} (default branch)"
+outcome "ok" "${DEFAULT_VERSION}" "$(git rev-parse --short HEAD)" "(default branch)"
 
 for version in ${JAHIA_VERSIONS}; do
     echo "Checking out and resolving dependencies for JAHIA_${version//./_}"
     if git checkout -b "JAHIA_${version//./_}" "JAHIA_${version//./_}"; then
-        resolve "${version}"
+        resolve "${version}" "$(git rev-parse --short HEAD)"
     else
-        record "  NO TAG  ${version}"
+        outcome "NO TAG" "${version}"
     fi
 done
 record ""
