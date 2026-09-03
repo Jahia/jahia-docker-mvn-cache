@@ -12,9 +12,9 @@
 # so that relative path resolves in each of them.
 #
 # Failure semantics, transcribed from the command this script replaces. The clone, the cd, the
-# version lookup and the resolution of the default version stop the build. Every per-version
-# resolution below is tolerated, because in the original those loops sat inside an && list, where
-# bash suppresses errexit, and the list ended with `|| true`.
+# version lookup and the resolution of the default version stop the build, as does creating the
+# report. Every per-version resolution below is tolerated, because in the original those loops
+# sat inside an && list, where bash suppresses errexit, and the list ended with `|| true`.
 
 set -euo pipefail
 
@@ -26,8 +26,8 @@ REPORT="${REPORT:-/opt/jahia-mvn-cache-report.txt}"   # overridable so the scrip
 
 record() { printf '%s\n' "$*" >> "${REPORT}"; }
 
-# result, version, then the commit it was resolved at and a note, both optional. A line with no
-# commit takes the short shape, so it does not end in the blanks of an empty column.
+# result, version, and optionally the commit it was resolved at, then a note beside it. Without
+# a commit the line takes the short shape, so it does not end in the blanks of an empty column.
 outcome() {
     local commit="${3-}" note="${4-}"
     if [[ -n ${commit} ]]; then
