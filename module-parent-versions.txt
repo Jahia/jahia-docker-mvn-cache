@@ -1,8 +1,9 @@
 # Versions of the org.jahia.modules:jahia-modules parent that the Maven cache is warmed for.
 #
 # Each block is a version on a line of its own, then the number of repositories that
-# declare it, then one line per repository. Only the version lines carry data, so a
-# repository moving between versions never touches a line the build reads.
+# declare it, then each of those repositories with the branches that declare it listed
+# underneath. Only the version lines carry data, so a repository moving between versions
+# never touches a line the build reads.
 #
 # This file is maintained by .github/workflows/census-module-parents.yml, which reads the parent
 # version declared by every repository whose CI uses this image, on its default branch and on
@@ -11,37 +12,390 @@
 #
 # Adding a version costs about 24 MB of compressed image, paid on every pull by every job.
 #
-# 101 repositories were read, and 26 versions are warmed.
+# 116 repositories were read, and 26 versions are warmed.
+
+8.2.3.0
+# 9 repositories:
+#  - jahia-authentication
+#    - main
+#  - jahia-cloud-config
+#    - main
+#  - jahia-cloud-modules
+#    - main
+#  - jahia-oauth
+#    - main
+#  - jahia-oauth-oidc
+#    - master
+#  - jcr-auth-provider
+#    - main
+#  - jexperience-auth-data-mapper
+#    - main
+#  - saml-authentication-valve
+#    - main
+#  - user-password-authentication
+#    - main
+
+8.2.2.1
+# 1 repository:
+#  - privateappstore
+#    - master
 
 8.2.2.0
-# 7 repositories:
+# 10 repositories:
 #  - formidable
+#    - main
 #  - jexperience
+#    - main
+#    - 4_2_x
 #  - jexperience-forms-bridge
+#    - main
 #  - kfind
+#    - main
 #  - kibana-dashboards-provider
+#    - main
+#  - mcp-server
+#    - main
+#  - quick-find
+#    - main
 #  - sandbox
+#    - main
 #  - siteSettings
+#    - main
+#    - 8_12_x
+#  - smart-images
+#    - main
+
+8.2.1.1
+# 1 repository:
+#  - jahia-csrf-guard
+#    - main
 
 8.2.1.0
-# 5 repositories:
+# 6 repositories:
 #  - jahia-ui-root
+#    - main
 #  - javascript-modules
+#    - main
 #  - jcontent
+#    - main
+#    - 3_6_x
 #  - luxe-jahia-demo
+#    - main
+#  - site-settings-seo
+#    - main
 #  - tools
+#    - main
 
 8.2.0.7
 # 3 repositories:
 #  - augmented-search-custom-configuration
+#    - main
 #  - graphql-core
+#    - main
 #  - richtext-ckeditor5
+#    - main
+
+8.2.0.0
+# 26 repositories:
+#  - assets
+#    - main
+#  - augmented-search
+#    - main
+#  - ckeditor
+#    - main
+#  - cloudimage
+#    - main
+#  - cloudinary-picker
+#    - main
+#  - cmis-provider
+#    - main
+#  - copy-to-other-languages
+#    - main
+#  - default
+#    - main
+#  - digitall
+#    - master
+#  - elasticsearch-connector
+#    - main
+#  - event
+#    - master
+#  - external-provider
+#    - main
+#  - jahia-base-demo-templates
+#    - master
+#  - jahia-oauth
+#    - 4_x
+#  - jahia-page-composer
+#    - main
+#  - jcr-auth-provider
+#    - 3_x
+#  - keepicker
+#    - main
+#  - legacy-default-components
+#    - main
+#  - module-manager
+#    - main
+#  - remotepublish
+#    - main
+#  - server-availability-manager
+#    - main
+#  - serverSettings
+#    - 9_x
+#  - siteimprove-connector
+#    - main
+#  - tabularList
+#    - master
+#  - templates-system
+#    - main
+#  - visibility
+#    - main
+
+8.1.9.1
+# 1 repository:
+#  - robots
+#    - main
 
 8.1.9.0
 # 3 repositories:
 #  - html-filtering
+#    - main
 #  - rolesmanager
+#    - main
 #  - security-filter-tools
+#    - main
 
-8.1.8.2
-# 0 repositories
+8.1.8.0
+# 8 repositories:
+#  - content-security-policy
+#    - main
+#  - directive-filter
+#    - main
+#  - forms-extended-inputs
+#    - main
+#  - jahia-administration
+#    - main
+#  - jahia-category-manager
+#    - master
+#  - jahia-dashboard
+#    - main
+#  - jahia-repository-explorer
+#    - main
+#  - site-settings-seo
+#    - 4_x
+
+8.1.7.1
+# 1 repository:
+#  - cas-authentication-valve
+#    - main
+
+8.1.7.0
+# 4 repositories:
+#  - jahia-csrf-guard
+#    - 4_x
+#  - jcontent
+#    - 2_x
+#  - site-settings-publication
+#    - main
+#  - sitemap
+#    - main
+
+8.1.6.1
+# 3 repositories:
+#  - forms-core
+#    - main
+#  - macros
+#    - main
+#  - userDashboard
+#    - main
+
+8.1.6.0
+# 5 repositories:
+#  - app-shell
+#    - main
+#  - copy-to-other-languages
+#    - 2_x
+#  - jahia-dashboard-docs
+#    - main
+#  - serverSettings-ee
+#    - main
+#  - tools
+#    - 4_x
+
+8.1.5.1
+# 1 repository:
+#  - server-availability-manager
+#    - 2_x
+
+8.1.5.0
+# 4 repositories:
+#  - distributed-sessions
+#    - main
+#  - jexperience
+#    - 3_6_x
+#  - remotepublish
+#    - 9_x
+#  - skins
+#    - main
+
+8.1.4.0
+# 1 repository:
+#  - module-manager
+#    - 2_8_x
+
+8.1.3.0
+# 6 repositories:
+#  - app-shell
+#    - 2_x
+#  - augmented-search
+#    - 3_x
+#  - graphql-core
+#    - 2_x
+#  - jahia-authentication
+#    - 1_x
+#  - jexperience
+#    - 3_3_x
+#  - personal-api-tokens
+#    - main
+
+8.1.2.3
+# 1 repository:
+#  - database-connector
+#    - main
+
+8.1.2.0
+# 2 repositories:
+#  - jexperience
+#    - 2_x
+#  - jexperience-auth-data-mapper
+#    - 3_x
+
+8.1.1.0
+# 4 repositories:
+#  - default
+#    - 8_6_x
+#  - external-provider
+#    - 4_6_x
+#  - graphql-core
+#    - 2_19_x
+#  - jexperience
+#    - 2_7_x
+
+8.1.0.0
+# 14 repositories:
+#  - LDAP-provider
+#    - main
+#  - automated-tagging
+#    - main
+#  - distributed-sessions
+#    - 3_4_x
+#  - graphql-core
+#    - 2_8_x
+#  - jahia-user-feedbacks
+#    - main
+#    - 1_x
+#  - jcrestapi
+#    - main
+#  - jexperience
+#    - 2_2_x
+#    - 2_3_x
+#    - 2_5_x
+#  - jexperience-forms-bridge
+#    - 2_x
+#  - linkchecker
+#    - main
+#  - sdl-generator-tools
+#    - master
+#  - security-filter-tools
+#    - 2_x
+#  - serverSettings
+#    - 9_7_x
+#  - siteSettings
+#    - 8_7_x
+#  - sitemap
+#    - 4_2_x
+
+8.0.3.0
+# 2 repositories:
+#  - jexperience
+#    - 2_2_0_x
+#  - sitemap
+#    - 4_0_x
+
+8.0.2.0
+# 3 repositories:
+#  - jexperience
+#    - 2_1_x
+#  - scheduled-publication-workflow
+#    - main
+#  - workflow-extender
+#    - main
+
+8.0.1.0
+# 7 repositories:
+#  - augmented-search-custom-configuration
+#    - 1_x
+#  - augmented-search-ui
+#    - main
+#  - jahia-oauth
+#    - 3_x
+#  - jexperience
+#    - 2_0_x
+#  - personal-api-tokens
+#    - 1_0_x
+#  - server-availability-manager
+#    - 2_0_x
+#  - tags
+#    - main
+
+8.0.0.0
+# 24 repositories:
+#  - LDAP-provider
+#    - 4_1_x
+#  - QA-Modules
+#    - main
+#  - app-shell
+#    - 2_7_x
+#    - 2_8_x
+#  - augmented-search-taglib
+#    - master
+#  - channels
+#    - master
+#  - contentRetrieval
+#    - main
+#  - df-tests-api
+#    - main
+#  - distributed-sessions
+#    - 3_1_x
+#  - forms-nocss-theme
+#    - main
+#  - forms-prefill
+#    - main
+#  - jahia-administration
+#    - 1_8_x
+#  - jahia-csrf-guard
+#    - 2_x
+#  - jahia-dashboard
+#    - 1_x
+#  - jahia-developer-tools
+#    - main
+#  - jahia-user-entries
+#    - main
+#  - jexperience-forms-bridge
+#    - 1_12_x
+#  - jquery
+#    - main
+#  - profile
+#    - main
+#  - request-safety-patch
+#    - main
+#  - seo
+#    - main
+#  - siteimprove-connector
+#    - 2_1_x
+#  - tasks
+#    - main
+#  - tools
+#    - 3_3_x
+#  - user-safety-patch
+#    - main
+
