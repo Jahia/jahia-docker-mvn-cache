@@ -1,0 +1,23 @@
+name: Census - Module parent versions
+
+# Empty on purpose.
+#
+# GitHub offers a workflow for manual dispatch only once its file is on the default branch, and
+# it then runs the copy taken from the ref you pick. This file is here so the real census can be
+# dispatched against its own branch and tried out before it merges.
+#
+# TODO: replace with the census in https://github.com/Jahia/jahia-docker-mvn-cache/pull/35.
+# Nothing else belongs here.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    name: Nothing to run yet
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder. Dispatch this against the branch that carries the census."
