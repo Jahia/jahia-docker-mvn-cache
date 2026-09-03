@@ -1,23 +1,119 @@
 name: Census - Module parent versions
 
-# Empty on purpose.
-#
-# GitHub offers a workflow for manual dispatch only once its file is on the default branch, and
-# it then runs the copy taken from the ref you pick. This file is here so the real census can be
-# dispatched against its own branch and tried out before it merges.
-#
-# TODO: replace with the census in https://github.com/Jahia/jahia-docker-mvn-cache/pull/35.
-# Nothing else belongs here.
+# Keeps module-parent-versions.txt in step with what the repositories using this image declare.
+# The job never changes the image by itself. It opens a pull request, whose own build measures
+# what the proposed versions cost.
 
 on:
+  schedule:
+    # Every day at 03:00 UTC.
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  placeholder:
-    name: Nothing to run yet
+  census:
+    name: Rewrite the warmed parent versions
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Placeholder. Dispatch this against the branch that carries the census."
+      # The token has to reach every repository of the organisation, and it has to open the
+      # pull request. A pull request opened with GITHUB_TOKEN starts no workflow, and the build
+      # of that pull request is what measures the size of the change.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ secrets.GH_ISSUES_PRS_CHORES }}
+
+      - name: Read the parent version declared by each repository
+        id: census
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ISSUES_PRS_CHORES }}
+        run: python3 scripts/census-module-parents.py 2>census.log
+
+      # always(), because the census writes its whole account — the repositories it read, every
+      # version it dropped and why, and a traceback if it raises — to census.log rather than to
+      # the job log. Without this the step that raises takes the log down with the runner, and
+      # the run ends red with no output at all.
+      - name: Report what the census found
+        if: always()
+        run: |
+          {
+            echo '## Census'
+            echo '```'
+            cat census.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # The file is rewritten only by a census that finished, so after a failure the working
+          # copy is still the committed one, and printing it would show a proposal that nothing
+          # proposed.
+          if [[ '${{ steps.census.outcome }}' == 'success' ]]; then
+            {
+              echo '## Proposed file'
+              echo '```'
+              cat module-parent-versions.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Open a pull request when the file changed
+        env:
+          GH_TOKEN: ${{ secrets.GH_ISSUES_PRS_CHORES }}
+          BRANCH: chore/module-parent-versions
+        run: |
+          set -euo pipefail
+          # Compare the versions, not the file. A repository moving from one warmed version to
+          # another rewrites the comments while the warmed set stays the same, and that must not
+          # cost a pull request and a full rebuild of the image.
+          versions() { sed -e 's/#.*//' | awk '{print $1}' | awk 'NF'; }
+          git show HEAD:module-parent-versions.txt | versions > /tmp/versions-before
+          versions < module-parent-versions.txt > /tmp/versions-after
+          if diff -q /tmp/versions-before /tmp/versions-after >/dev/null; then
+            echo "The warmed versions are unchanged. Only the repository lists moved, so no pull request is opened."
+            exit 0
+          fi
+          diff /tmp/versions-before /tmp/versions-after || true
+          git config user.name "Jahia Continuous Integration account"
+          git config user.email "jahia-ci@users.noreply.github.com"
+          # The pull request targets main, so its head has to sit on main and carry nothing else:
+          # a dispatch from any other ref would put that ref's commits in the proposal, and
+          # merging the proposal would merge them too. The checkout above is shallow and single
+          # branch, so main is not a local ref and has to be fetched; and switching ref would
+          # overwrite the file the census just wrote, so that is set aside first.
+          cp module-parent-versions.txt /tmp/proposed.txt
+          git fetch --depth=1 origin main
+          # -f because the census left that file modified, which otherwise blocks the switch.
+          git checkout -f -B "${BRANCH}" FETCH_HEAD
+          cp /tmp/proposed.txt module-parent-versions.txt
+          git add module-parent-versions.txt
+          # Reachable when the ref this ran from is behind main: the earlier comparison is against
+          # that ref, and committing nothing would fail the step for no reason.
+          if git diff --cached --quiet; then
+            echo "The proposal already matches main. No pull request is needed."
+            exit 0
+          fi
+          git commit -m "chore: update the warmed jahia-modules parent versions"
+          git push --force origin "${BRANCH}"
+          # --state open, because `gh pr view <branch>` also resolves a closed or merged one. Once
+          # this branch's last pull request lands, that answer would report success and leave the
+          # new proposal pushed with nothing open to review it.
+          existing="$(gh pr list --head "${BRANCH}" --state open --json number --jq '.[0].number // empty')"
+          {
+            echo "The versions warmed by the Maven cache no longer match what the repositories using this image declare. This pull request proposes the list the census produced."
+            echo
+            echo "Each added version costs about 24 MB of compressed image, paid on every pull by every job. The build of this pull request publishes an image, so the size can be compared against the one on \`main\` before merging."
+            echo
+            echo '```'
+            cat census.log
+            echo '```'
+          } > pr-body.md
+          if [[ -n ${existing} ]]; then
+            # The force-push already moved the pull request. Its body quotes the census log, which
+            # this run has replaced, so that is rewritten rather than left describing an older set.
+            gh pr edit "${existing}" --body-file pr-body.md
+            echo "Updated the open pull request #${existing}."
+            exit 0
+          fi
+          gh pr create --base main --head "${BRANCH}" \
+            --title "chore: update the warmed jahia-modules parent versions" \
+            --body-file pr-body.md

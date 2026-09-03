@@ -52,6 +52,67 @@ High-level flow (example using JDK 17 as the default):
 
 Key idea: warm the Maven cache once in a default image, then other images copy the `.m2` directory from that image instead of running Maven again.
 
+## Which Jahia versions are warmed
+
+The warmup has two steps, and they do not pull the same artifacts, so they take their versions
+from two different places.
+
+`JAHIA_CORE_VERSIONS`, a build arg in `Dockerfile-mvn`, holds tags that
+[Jahia/jahia-private](https://github.com/Jahia/jahia-private) is checked out at. Each tag is
+resolved as a full product reactor, which downloads the third-party artifacts and the plugins the
+product build needs. A reactor resolution never downloads a Jahia artifact, because
+`jahia-impl`, `jahia-api` and `jahia-taglib` are members of that reactor. This list is decided by
+hand and stays short.
+
+`module-parent-versions.txt` holds versions of the `org.jahia.modules:jahia-modules` parent. Each
+one is resolved through a throwaway pom that declares the parent. That downloads the parent pom,
+the plugins it pins, and `org.jahia.server:jahia-impl` and `jahia-taglib` at the same version.
+This is the chain a module build walks, so this file is what decides whether a module repository
+gets a cache hit.
+
+The parent step runs on the union of the file, the core versions and the version on the default
+branch of `Jahia/jahia-private`. A version that appears twice is resolved once.
+
+### How module-parent-versions.txt is maintained
+
+`.github/workflows/census-module-parents.yml` runs every day and rewrites the file. It reads
+every repository in the `Jahia` organisation whose workflows use this image. In each one, the census takes the parent version from the root `pom.xml`, on the default branch and on
+each maintenance branch. A repository with no root `pom.xml` is skipped, so the JavaScript
+repositories drop out. Under each version the file lists the repositories that
+declare it, and under each repository the branches that do, so a version can be traced to the
+branch that asked for it. The count is of repositories, so it is smaller than the number of
+branch lines whenever a repository declares the same version on more than one branch.
+
+A version is kept when it is `8.0.0.0` or later and when it is not a SNAPSHOT. It is also
+checked against the release repository, where `jahia-impl` must exist at that version. That last check matters. A tag of
+`Jahia/jahia-private` can exist months before its artifacts are published, and a version whose
+`jahia-impl` is missing warms nothing but a pom.
+
+The census never changes the image on its own. It opens a pull request, and the build of that
+pull request publishes an image whose size can be compared with the one on `main`. Each added
+version costs about 24 MB of compressed image, paid on every pull by every job.
+
+A pull request is opened only when the set of versions changes. A repository that moves from one
+warmed version to another rewrites the repository lists while the warmed set stays the same, and
+that alone is not worth a rebuild of the image.
+
+The version on the default branch of `Jahia/jahia-private` is always resolved, so a repository
+that builds against the current SNAPSHOT needs no entry in the file. The SNAPSHOT artifacts
+themselves are removed from the cache at the end of the warmup, because they change.
+
+To change how many versions are kept, edit `MIN_REPOSITORIES` or `FLOOR` at the top of
+`scripts/census-module-parents.py`.
+
+### What the image warmed
+
+Every image carries `/opt/jahia-mvn-cache-report.txt`, which lists each version the build
+resolved and whether it succeeded. Read it instead of reading the version list, because a
+resolution that fails leaves the version out without failing the build.
+
+The product reactor lines also name the commit of `Jahia/jahia-private` each one was resolved
+at, because they check out a tag and a tag can be moved. The parent chain lines have no commit:
+they resolve Maven coordinates from the repository.
+
 ## Build image locally
 
 From an ARM64 host, build a base image (name: `ghcr.io/jahia/jahia-docker-mvn-cache:11-jdk-resolute-node-base`)
