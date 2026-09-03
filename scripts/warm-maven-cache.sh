@@ -22,11 +22,18 @@ set -euo pipefail
 # more than that. Every outcome is therefore recorded in this file, which a later step prints
 # from its own, short output. The file stays in the image, so a job can ask what it holds.
 REPORT="${REPORT:-/opt/jahia-mvn-cache-report.txt}"   # overridable so the script can be run outside a build
+# The steps below change directory twice and delete both directories on the way out, so a
+# relative path would scatter the report across them and take most of it down with them —
+# leaving a green build and a report whose resolutions are simply absent.
+[[ ${REPORT} == /* ]] || REPORT="${PWD}/${REPORT}"
 
 record() { printf '%s\n' "$*" >> "${REPORT}"; }
 
-# One outcome line: result, version, the commit it was resolved at, and a note. The trailing
-# fields are optional, and each shape has its own printf so that no line carries trailing blanks.
+# One outcome line: result, version, the commit it was resolved at, and a note. Both trailing
+# fields are optional, and every combination has its own printf, so that no line carries
+# trailing blanks and no field is dropped. The commit is padded to a column only when a note
+# follows it, and the column is wider than git's current --short so that a longer abbreviation
+# does not push the note out of line.
 #
 # Only a reactor resolution has a commit to name. It checks out a tag, and a tag is a label that
 # can be moved, so the commit — not the version string — is what decides the artifact set that
@@ -34,12 +41,14 @@ record() { printf '%s\n' "$*" >> "${REPORT}"; }
 # after the clone below has been deleted.
 outcome() {
     local status="$1" version="$2" commit="${3-}" note="${4-}"
-    if [[ -z ${commit} ]]; then
-        printf '  %-7s %s\n' "${status}" "${version}" >> "${REPORT}"
-    elif [[ -z ${note} ]]; then
+    if [[ -n ${commit} && -n ${note} ]]; then
+        printf '  %-7s %-17s %-12s %s\n' "${status}" "${version}" "${commit}" "${note}" >> "${REPORT}"
+    elif [[ -n ${commit} ]]; then
         printf '  %-7s %-17s %s\n' "${status}" "${version}" "${commit}" >> "${REPORT}"
+    elif [[ -n ${note} ]]; then
+        printf '  %-7s %-17s %s\n' "${status}" "${version}" "${note}" >> "${REPORT}"
     else
-        printf '  %-7s %-17s %-10s  %s\n' "${status}" "${version}" "${commit}" "${note}" >> "${REPORT}"
+        printf '  %-7s %s\n' "${status}" "${version}" >> "${REPORT}"
     fi
 }
 
@@ -71,8 +80,12 @@ ${MVN_CMD}
 outcome "ok" "${DEFAULT_VERSION}" "$(git rev-parse --short HEAD)" "(default branch)"
 
 for version in ${JAHIA_VERSIONS}; do
-    echo "Checking out and resolving dependencies for JAHIA_${version//./_}"
-    if git checkout -b "JAHIA_${version//./_}" "JAHIA_${version//./_}"; then
+    tag="JAHIA_${version//./_}"
+    echo "Checking out and resolving dependencies for ${tag}"
+    # --detach rather than a branch per tag: nothing here needs a branch, and creating one made
+    # a repeated version fail on the name instead of the tag, which the report then blamed on a
+    # missing tag. Detached, a failure here really is a tag that is not there.
+    if git checkout --detach "${tag}"; then
         resolve "${version}" "$(git rev-parse --short HEAD)"
     else
         outcome "NO TAG" "${version}"
