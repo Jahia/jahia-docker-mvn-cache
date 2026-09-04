@@ -1,0 +1,427 @@
+# Versions of the org.jahia.modules:jahia-modules parent that the Maven cache is warmed for.
+#
+# Each block is a version on a line of its own, then the number of repositories that
+# declare it, then each of those repositories with the branches that declare it listed
+# underneath, each branch with the commit it sits at and the UTC day of that commit.
+# Only the version lines carry data, so a repository moving between versions never
+# touches a line the build reads.
+#
+# This file is maintained by .github/workflows/census-module-parents.yml, which reads the
+# parent version declared by every repository carrying one of the topics the census asks
+# for, on its default branch and on each maintenance branch still being committed to. Edit
+# the file by hand only for a version the census cannot see, because the next run rewrites it.
+#
+# Adding a version costs about 30 MB of compressed image, paid on every pull by every job.
+#
+# 280 repositories were read, and 23 versions are warmed.
+
+8.2.3.0
+# 7 repositories:
+#  - jahia-authentication
+#    - main (866d279 - 2026-09-02)
+#  - jahia-cloud-modules
+#    - main (06a8fe1 - 2026-09-03)
+#  - jahia-oauth
+#    - main (278d406 - 2026-09-03)
+#  - jcr-auth-provider
+#    - main (ba07c82 - 2026-07-27)
+#  - jexperience-auth-data-mapper
+#    - main (cae3895 - 2026-07-27)
+#  - saml-authentication-valve
+#    - main (e295e4e - 2026-09-02)
+#  - user-password-authentication
+#    - main (fafc7ff - 2026-09-03)
+
+8.2.2.0
+# 9 repositories:
+#  - formidable
+#    - main (8bcd229 - 2026-09-03)
+#  - jexperience
+#    - main (c7f24f4 - 2026-09-02)
+#    - 4_2_x (0b8a800 - 2026-09-04)
+#  - jexperience-dashboards
+#    - main (87f4c69 - 2026-07-27)
+#  - jexperience-forms-bridge
+#    - main (beb926e - 2026-07-27)
+#  - kibana-dashboards-provider
+#    - main (76524b3 - 2026-09-01)
+#  - mcp-server
+#    - main (79d8a72 - 2026-07-27)
+#  - sandbox
+#    - main (db2a276 - 2026-09-04)
+#  - siteSettings
+#    - main (e69b5d4 - 2026-09-04)
+#    - 8_12_x (0527c63 - 2026-08-05)
+#  - smart-images
+#    - main (f508c84 - 2026-08-31)
+
+8.2.1.1
+# 1 repository:
+#  - jahia-csrf-guard
+#    - main (3609837 - 2026-09-03)
+
+8.2.1.0
+# 7 repositories:
+#  - jahia-ui-root
+#    - main (b70f699 - 2026-07-27)
+#  - javascript-modules
+#    - main (741904b - 2026-08-21)
+#  - jcontent
+#    - main (d3fd051 - 2026-09-02)
+#    - 3_6_x (e6289b6 - 2026-08-20)
+#  - luxe-jahia-demo
+#    - main (7a3b762 - 2026-09-03)
+#  - site-settings-seo
+#    - main (def5798 - 2026-09-02)
+#  - tools
+#    - main (6032629 - 2026-09-03)
+#  - visibility-migrator
+#    - main (9eeb9de - 2026-09-01)
+
+8.2.0.7
+# 3 repositories:
+#  - augmented-search-custom-configuration
+#    - main (2886e94 - 2026-07-27)
+#  - graphql-core
+#    - main (70804ec - 2026-09-03)
+#  - richtext-ckeditor5
+#    - main (af710d2 - 2026-07-27)
+
+8.2.0.4
+# 1 repository:
+#  - external-provider-users-groups
+#    - main (d5aaeb1 - 2026-08-26)
+
+8.2.0.0
+# 23 repositories:
+#  - assets
+#    - main (5683083 - 2026-07-27)
+#  - augmented-search
+#    - main (3dcc7dc - 2026-09-03)
+#  - ckeditor
+#    - main (cc903d2 - 2026-07-27)
+#  - cloudimage
+#    - main (4ce32a3 - 2026-07-27)
+#  - copy-to-other-languages
+#    - main (f5f6ca0 - 2026-07-27)
+#  - default
+#    - main (d2eeb2a - 2026-08-12)
+#  - elasticsearch-connector
+#    - main (0e7971a - 2026-07-27)
+#  - external-provider
+#    - main (0a5225c - 2026-08-12)
+#  - jahia-oauth
+#    - 4_x (bd2cfb9 - 2026-09-02)
+#  - jahia-page-composer
+#    - main (372f79b - 2026-07-27)
+#  - jcr-auth-provider
+#    - 3_x (6746490 - 2026-06-11)
+#  - keepicker
+#    - main (309ef78 - 2026-08-04)
+#  - legacy-default-components
+#    - main (fbee397 - 2026-07-27)
+#  - module-manager
+#    - main (a837f04 - 2026-08-12)
+#  - npm-modules-engine
+#    - main (2c67b69 - 2024-12-02)
+#  - rating
+#    - master (3b2103d - 2024-04-29)
+#  - remotepublish
+#    - main (2dbe9b2 - 2026-09-03)
+#  - server-availability-manager
+#    - main (41288fa - 2026-08-17)
+#  - serverSettings
+#    - 9_x (ec4654b - 2026-09-01)
+#  - siteimprove-connector
+#    - main (9ad15d8 - 2026-08-04)
+#  - templates-system
+#    - main (6be9d89 - 2026-07-27)
+#  - translation-globallink
+#    - main (7a34225 - 2026-07-27)
+#  - visibility
+#    - main (5a7ef6f - 2026-09-01)
+
+8.1.9.1
+# 1 repository:
+#  - robots
+#    - main (5e19da5 - 2026-07-27)
+
+8.1.9.0
+# 3 repositories:
+#  - html-filtering
+#    - main (2578e2e - 2026-07-27)
+#  - rolesmanager
+#    - main (a1fd066 - 2026-09-03)
+#  - security-filter-tools
+#    - main (08d4195 - 2026-07-27)
+
+8.1.8.0
+# 6 repositories:
+#  - content-security-policy
+#    - main (b464a28 - 2026-08-03)
+#  - directive-filter
+#    - main (6a75e40 - 2026-07-27)
+#  - forms-extended-inputs
+#    - main (02f70aa - 2026-07-27)
+#  - jahia-administration
+#    - main (214b5ef - 2026-07-27)
+#  - jahia-dashboard
+#    - main (2cb148b - 2026-07-27)
+#  - jahia-repository-explorer
+#    - main (304f05a - 2026-07-27)
+
+8.1.7.1
+# 1 repository:
+#  - cas-authentication-valve
+#    - main (04e9cbb - 2026-07-27)
+
+8.1.7.0
+# 3 repositories:
+#  - jahia-csrf-guard
+#    - 4_x (9319c55 - 2026-08-19)
+#  - site-settings-publication
+#    - main (a8c794b - 2026-08-12)
+#  - sitemap
+#    - main (4ffcff3 - 2026-07-27)
+
+8.1.6.1
+# 3 repositories:
+#  - forms-core
+#    - main (c062ec0 - 2026-09-03)
+#  - macros
+#    - main (8e9cc80 - 2026-07-27)
+#  - userDashboard
+#    - main (bb072ba - 2026-07-30)
+
+8.1.6.0
+# 5 repositories:
+#  - app-shell
+#    - main (36247a3 - 2026-07-27)
+#  - content-editor
+#    - master (eb8b885 - 2026-05-21)
+#  - jahia-dashboard-docs
+#    - main (532f324 - 2026-07-27)
+#  - serverSettings-ee
+#    - main (c51c8d6 - 2026-08-12)
+#  - tools
+#    - 4_x (a115e86 - 2026-09-03)
+
+8.1.5.0
+# 4 repositories:
+#  - content-type-manager
+#    - main (7f79fc2 - 2023-06-20)
+#  - distributed-sessions
+#    - main (97f2726 - 2026-07-27)
+#  - skins
+#    - main (9cf15b4 - 2026-07-27)
+#  - static-assets-custom
+#    - main (0976d4e - 2025-01-22)
+
+8.1.3.0
+# 7 repositories:
+#  - advanced-visibility
+#    - main (c4692d0 - 2026-05-13)
+#  - formbuilder
+#    - master (15a8132 - 2024-01-16)
+#  - graphql-core
+#    - 2_x (5949f65 - 2026-08-04)
+#  - jahia-authentication
+#    - 1_x (3109a11 - 2026-09-02)
+#  - personal-api-tokens
+#    - main (c41ec7f - 2026-07-27)
+#  - publication
+#    - master (4d3cc25 - 2024-01-16)
+#  - richtext-platejs
+#    - main (9988180 - 2023-01-09)
+
+8.1.2.3
+# 1 repository:
+#  - database-connector
+#    - main (c29fe63 - 2026-05-18)
+
+8.1.2.0
+# 2 repositories:
+#  - cloudinary-integration
+#    - master (a22b6a8 - 2023-11-21)
+#  - nextjs-proxy
+#    - main (43a7a08 - 2023-02-27)
+
+8.1.0.0
+# 9 repositories:
+#  - LDAP-provider
+#    - main (598d3ef - 2026-07-28)
+#  - automated-tagging
+#    - main (72490f7 - 2026-07-27)
+#  - forms-snippets-extension
+#    - main (7defce9 - 2026-07-27)
+#  - function-score-examples
+#    - main (103c452 - 2026-07-27)
+#  - jahia-user-feedbacks
+#    - main (d7be492 - 2026-07-27)
+#  - jcrestapi
+#    - main (2e79f80 - 2026-08-28)
+#  - jexperience-components
+#    - master (c7e9748 - 2022-08-26)
+#  - linkchecker
+#    - main (013332d - 2026-07-27)
+#  - siteSettings
+#    - 8_7_x (46db51e - 2026-08-12)
+
+8.0.3.0
+# 4 repositories:
+#  - OSGi-modules-samples
+#    - main (19835a8 - 2026-09-03)
+#  - facebook-oauth-connector
+#    - master (a3e2378 - 2023-07-20)
+#  - franceconnect-oauth-connector
+#    - master (4a59e3d - 2023-07-20)
+#  - security-filter
+#    - master (6207eb1 - 2022-08-10)
+
+8.0.2.0
+# 4 repositories:
+#  - Jahia-MF-Integ-Test-Site
+#    - main (70bbceb - 2026-07-27)
+#  - spnego-authentication-valve
+#    - main (e0e4649 - 2026-07-27)
+#  - videostreaming
+#    - master (31b0eb4 - 2021-03-24)
+#  - workflow-extender
+#    - main (517f72f - 2026-07-28)
+
+8.0.1.0
+# 8 repositories:
+#  - augmented-search-ui
+#    - main (88def83 - 2026-07-27)
+#  - jaas-authentication-valve
+#    - master (56e7b44 - 2026-01-09)
+#  - jahia-oauth
+#    - 3_x (6e960dc - 2026-09-03)
+#  - jahia-starter-template-components
+#    - master (0c8b117 - 2024-03-05)
+#  - jcifs-authentication-valve
+#    - master (33ca961 - 2026-01-09)
+#  - jcustomer-perf
+#    - main (f0ce74e - 2026-07-27)
+#  - tags
+#    - main (8a6a91d - 2026-08-12)
+#  - userregistration
+#    - master (653a2d4 - 2023-10-20)
+
+8.0.0.0
+# 57 repositories:
+#  - Marketing-Factory-Variant-listener-sample
+#    - master (a67f0a1 - 2021-02-17)
+#  - QA-Modules
+#    - main (a077c4c - 2026-07-27)
+#  - article
+#    - master (16f3abd - 2021-03-05)
+#  - bookmarks
+#    - master (7b76917 - 2021-01-21)
+#  - bootstrap-acme-space-templates
+#    - master (f80c563 - 2020-11-30)
+#  - bootstrap-components
+#    - master (edc2469 - 2020-09-08)
+#  - bootstrap3
+#    - master (3ae19f9 - 2023-02-14)
+#  - bootstrap3-test-templates-set
+#    - master (32a848c - 2021-09-17)
+#  - calendar
+#    - master (a71b925 - 2021-07-08)
+#  - contentRetrieval
+#    - main (be48395 - 2026-07-27)
+#  - contribute
+#    - master (dc32da2 - 2020-07-30)
+#  - cookie-policy
+#    - master (ab6f665 - 2020-11-24)
+#  - df-tests-api
+#    - main (6009cd9 - 2026-08-27)
+#  - document-viewer
+#    - master (1144355 - 2020-06-15)
+#  - dummy-csrf-test-module
+#    - master (1506392 - 2025-12-12)
+#  - elasticsearch-connector-7
+#    - master (b9513b8 - 2021-07-06)
+#  - facets
+#    - main (5679609 - 2026-07-27)
+#  - forms-mailchimp
+#    - master (7f46c07 - 2023-05-04)
+#  - forms-nocss-theme
+#    - main (a81e4ea - 2026-07-27)
+#  - forms-prefill
+#    - main (899281d - 2026-07-27)
+#  - googleAnalytics
+#    - master (318f62b - 2023-07-21)
+#  - grid
+#    - master (a697cde - 2024-04-16)
+#  - guest-multipart-filter
+#    - main (9cb020a - 2026-07-27)
+#  - jahia-developer-tools
+#    - main (13a99d6 - 2026-07-27)
+#  - jahia-portlet
+#    - master (9d9af0c - 2020-07-22)
+#  - jahia-spam-filtering
+#    - master (dc5d273 - 2020-07-30)
+#  - jahia-user-entries
+#    - main (4b17053 - 2026-07-27)
+#  - jaxrs-osgi-extender
+#    - master (0fd0ed0 - 2024-10-17)
+#  - jexperience-google-analytics
+#    - master (e8e29d5 - 2023-07-21)
+#  - jexperience-queries-components
+#    - master (475e45c - 2022-06-13)
+#  - job
+#    - master (02b4655 - 2020-06-15)
+#  - jquery
+#    - main (8ee3570 - 2026-07-27)
+#  - local-site-manager
+#    - master (7a23219 - 2020-07-01)
+#  - location
+#    - master (95291d5 - 2022-03-09)
+#  - person
+#    - master (40f2772 - 2021-11-18)
+#  - poll
+#    - master (c8a6939 - 2020-06-15)
+#  - press
+#    - master (8c07353 - 2021-11-18)
+#  - profile
+#    - main (7a0466d - 2026-07-27)
+#  - request-safety-patch
+#    - main (4698e1f - 2026-08-24)
+#  - rss
+#    - master (bbf9dea - 2020-07-30)
+#  - sample-bootstrap-templates
+#    - master (7866927 - 2023-06-27)
+#  - search
+#    - main (9797fa3 - 2026-07-27)
+#  - seo
+#    - main (60b55b6 - 2026-07-27)
+#  - socialsharing
+#    - master (f9c74a5 - 2021-11-18)
+#  - springmvc-example
+#    - master (09bad58 - 2022-04-04)
+#  - summary
+#    - master (62fc8ea - 2020-06-15)
+#  - tasks
+#    - main (9425752 - 2026-07-27)
+#  - teasers
+#    - master (a0f36c1 - 2020-06-15)
+#  - templates-web
+#    - master (c98d6a7 - 2020-08-24)
+#  - templates-web-blue
+#    - master (26c97e2 - 2024-09-12)
+#  - templates-web-space
+#    - master (65fd6de - 2020-08-24)
+#  - topstories
+#    - master (86f63c9 - 2021-11-18)
+#  - translation
+#    - master (8eca72a - 2020-06-15)
+#  - translationworkflow
+#    - master (461c608 - 2020-06-15)
+#  - user-safety-patch
+#    - main (0f0951a - 2026-07-27)
+#  - webClipping
+#    - master (0df2ca1 - 2020-06-15)
+#  - webflow-filter
+#    - main (1181bc1 - 2024-03-05)
+
