@@ -1,0 +1,47 @@
+# Versions of the org.jahia.modules:jahia-modules parent that the Maven cache is warmed for.
+#
+# Each block is a version on a line of its own, then the number of repositories that
+# declare it, then one line per repository. Only the version lines carry data, so a
+# repository moving between versions never touches a line the build reads.
+#
+# This file is maintained by .github/workflows/census-module-parents.yml, which reads the parent
+# version declared by every repository whose CI uses this image, on its default branch and on
+# each of its maintenance branches. Edit the file by hand only for a version the census
+# cannot see, because the next run rewrites it.
+#
+# Adding a version costs about 24 MB of compressed image, paid on every pull by every job.
+#
+# 101 repositories were read, and 26 versions are warmed.
+
+8.2.2.0
+# 7 repositories:
+#  - formidable
+#  - jexperience
+#  - jexperience-forms-bridge
+#  - kfind
+#  - kibana-dashboards-provider
+#  - sandbox
+#  - siteSettings
+
+8.2.1.0
+# 5 repositories:
+#  - jahia-ui-root
+#  - javascript-modules
+#  - jcontent
+#  - luxe-jahia-demo
+#  - tools
+
+8.2.0.7
+# 3 repositories:
+#  - augmented-search-custom-configuration
+#  - graphql-core
+#  - richtext-ckeditor5
+
+8.1.9.0
+# 3 repositories:
+#  - html-filtering
+#  - rolesmanager
+#  - security-filter-tools
+
+8.1.8.2
+# 0 repositories
