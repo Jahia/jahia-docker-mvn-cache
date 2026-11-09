@@ -2,12 +2,12 @@
 # Warm /root/.m2 with the artifacts a Jahia CI build asks for.
 #
 # Two steps, and they do not pull the same thing:
-#   1. jahia-private is cloned and resolved at each version of JAHIA_VERSIONS. A reactor
+#   1. jahia-private is cloned and resolved at each version of JAHIA_CORE_VERSIONS. A reactor
 #      resolution downloads the third-party artifacts and the plugins the product build needs.
-#   2. A throwaway pom whose parent is org.jahia.modules:jahia-modules is resolved at the same
-#      versions. That downloads the parent chain a module build walks.
+#   2. A throwaway pom whose parent is org.jahia.modules:jahia-modules is resolved at every
+#      version of PARENT_VERSIONS_FILE. That downloads the parent chain a module build walks.
 #
-# JAHIA_VERSIONS, COMMON_GOALS and MVN_CMD come in as build args, and MVN_CMD points at
+# JAHIA_CORE_VERSIONS, COMMON_GOALS and MVN_CMD come in as build args, and MVN_CMD points at
 # ../maven.settings.xml. Both working directories below sit one level under the build directory,
 # so that relative path resolves in each of them.
 #
@@ -23,6 +23,7 @@ set -euo pipefail
 REPORT="${REPORT:-/opt/jahia-mvn-cache-report.txt}"   # overridable so the script can be run outside a build
 # Absolute, because the steps below change directory and then delete those directories.
 [[ ${REPORT} == /* ]] || REPORT="${PWD}/${REPORT}"
+PARENT_VERSIONS_FILE="${PARENT_VERSIONS_FILE:-/opt/module-parent-versions.txt}"
 
 record() { printf '%s\n' "$*" >> "${REPORT}"; }
 
@@ -63,7 +64,7 @@ echo "Resolving dependencies for the default version (${DEFAULT_VERSION})"
 ${MVN_CMD}
 outcome "ok" "${DEFAULT_VERSION}" "$(git rev-parse --short HEAD)" "(default branch)"
 
-for version in ${JAHIA_VERSIONS}; do
+for version in ${JAHIA_CORE_VERSIONS}; do
     tag="JAHIA_${version//./_}"
     echo "Checking out and resolving dependencies for ${tag}"
     # Detached, so a repeated version fails on the tag rather than on a duplicate branch name.
@@ -76,17 +77,20 @@ done
 record ""
 record "Parent chain resolutions:"
 
-# The default version is warmed through the parent chain as well.
-JAHIA_VERSIONS="${DEFAULT_VERSION} ${JAHIA_VERSIONS}"
+# The parent chain is warmed for the versions the repositories declare, for the versions resolved
+# above, and for the default version. First occurrence wins, so a version listed twice is
+# resolved once.
+PARENT_VERSIONS="$(printf '%s\n' ${DEFAULT_VERSION} ${JAHIA_CORE_VERSIONS} \
+    $(sed -e 's/#.*//' "${PARENT_VERSIONS_FILE}" | awk '{print $1}') | awk 'NF && !seen[$0]++')"
 
 cd ..
 rm -rf jahia-private
 
-echo "Create a dummy Maven project, with org.jahia.modules:jahia-modules as parent, for each version of JAHIA_VERSIONS"
+echo "Create a dummy Maven project, with org.jahia.modules:jahia-modules as parent, for each version"
 mkdir -p dummy-project
 cd dummy-project
 
-for version in ${JAHIA_VERSIONS}; do
+for version in ${PARENT_VERSIONS}; do
     echo "Creating POM for Jahia version $version"
     cat > pom.xml <<POM
 <?xml version="1.0" encoding="UTF-8"?>
